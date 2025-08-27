@@ -28,7 +28,7 @@ struct SignUpView: View {
     var body: some View {
         Group {
             if showSignIn {
-               // SigninView()
+                SigninView()
             } else {
                 signUpContent
             }
@@ -48,21 +48,22 @@ struct SignUpView: View {
     private var signUpContent: some View {
         GeometryReader { geometry in
             ZStack {
-    ZStack {Image("cofeecafe")
-            .resizable()
-            .aspectRatio(contentMode: .fill)
-            
-        Rectangle()
-        .fill(
-        LinearGradient(
-        gradient: Gradient(colors: [
-        Color.black.opacity(0.5),
-        Color.black.opacity(0.8)]),
-                startPoint: .top,
-                endPoint: .bottom
-            ))
-                }
-        .ignoresSafeArea()
+            ZStack {
+                Image("cofeecafe")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .clipped()
+                
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color.black.opacity(0.5),
+                        Color.black.opacity(0.8)
+                    ]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+            .ignoresSafeArea()
                 
     ScrollView {
         VStack(spacing: 0) {
@@ -98,17 +99,22 @@ struct SignUpView: View {
         .foregroundColor(.white.opacity(0.9))
         .font(.system(size: 14))
                             
-        TextField("", text: $username)
+        TextField("Enter your username", text: $username)
         .textFieldStyle(PlainTextFieldStyle())
         .foregroundColor(.white)
-        .autocapitalization(.none)
+        .textContentType(.username)
+        .autocorrectionDisabled()
+        .textInputAutocapitalization(.never)
         .padding(.vertical, 12)
         .padding(.horizontal, 16)
         .background(
-            Rectangle()
-            .stroke(.white.opacity(0.3), lineWidth: 1)
-            .background(Color.clear)
-                )}
+            RoundedRectangle(cornerRadius: 4)
+                .stroke(.white.opacity(0.3), lineWidth: 1)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.black.opacity(0.2))
+                )
+        )}
                             
         // Email field
         VStack(alignment: .leading, spacing: 8) {
@@ -116,17 +122,23 @@ struct SignUpView: View {
     .foregroundColor(.white.opacity(0.9))
     .font(.system(size: 14))
                 
-    TextField("", text: $email)
+    TextField("Enter your email", text: $email)
     .textFieldStyle(PlainTextFieldStyle())
     .foregroundColor(.white)
+    .textContentType(.emailAddress)
     .keyboardType(.emailAddress)
-    .autocapitalization(.none)
+    .autocorrectionDisabled()
+    .textInputAutocapitalization(.never)
     .padding(.vertical, 12)
     .padding(.horizontal, 16)
     .background(
-        Rectangle()
-        .stroke(.white.opacity(0.3), lineWidth: 1)
-        .background(Color.clear))
+        RoundedRectangle(cornerRadius: 4)
+            .stroke(.white.opacity(0.3), lineWidth: 1)
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.black.opacity(0.2))
+            )
+    )
     }
                             
     // New Password field
@@ -135,14 +147,22 @@ struct SignUpView: View {
     .foregroundColor(.white.opacity(0.9))
     .font(.system(size: 14))
                                 
-    SecureField("", text: $newPassword)
+    SecureField("Enter your password", text: $newPassword)
     .textFieldStyle(PlainTextFieldStyle())
     .foregroundColor(.white)
+    .textContentType(.newPassword)
+    .autocorrectionDisabled()
+    .textInputAutocapitalization(.never)
     .padding(.vertical, 12)
     .padding(.horizontal, 16)
-    .background(Rectangle()
-        .stroke(.white.opacity(0.3), lineWidth: 1)
-        .background(Color.clear))
+    .background(
+        RoundedRectangle(cornerRadius: 4)
+            .stroke(.white.opacity(0.3), lineWidth: 1)
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.black.opacity(0.2))
+            )
+    )
             }
                             
     // Confirm password
@@ -151,25 +171,34 @@ struct SignUpView: View {
         .foregroundColor(.white.opacity(0.9))
         .font(.system(size: 14))
                                 
-    SecureField("", text: $confirmPassword)
+    SecureField("Confirm your password", text: $confirmPassword)
     .textFieldStyle(PlainTextFieldStyle())
     .foregroundColor(.white)
+    .textContentType(.newPassword)
+    .autocorrectionDisabled()
+    .textInputAutocapitalization(.never)
     .padding(.vertical, 12)
     .padding(.horizontal, 16)
-    .background(Rectangle()
-    .stroke(.white.opacity(0.3), lineWidth: 1)
-    .background(Color.clear)
-)}
+    .background(
+        RoundedRectangle(cornerRadius: 4)
+            .stroke(.white.opacity(0.3), lineWidth: 1)
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.black.opacity(0.2))
+            )
+    )
+}
                             
     // Checkboxes
     VStack(spacing: 16) {
     // Face ID checkbox
     HStack(alignment: .top, spacing: 12) {
     Button(action: {enableFaceID.toggle()}) {
-        Rectangle()
+        RoundedRectangle(cornerRadius: 2)
         .stroke(.white.opacity(0.6), lineWidth: 1)
-        .background(enableFaceID ? Color.white.opacity(0.2) : Color.clear)                                            .frame(width: 20, height: 20)
-    .overlay(
+        .background(enableFaceID ? Color.white.opacity(0.2) : Color.clear)
+        .frame(width: 20, height: 20)
+        .overlay(
             enableFaceID ?
             Image(systemName: "checkmark")
         .font(.system(size: 12, weight: .bold))
@@ -189,12 +218,12 @@ struct SignUpView: View {
             Button(action: {
             agreeToTerms.toggle()
             }) {
-                Rectangle()
+                RoundedRectangle(cornerRadius: 2)
             .stroke(.white.opacity(0.6), lineWidth: 1)
-                                        .background(agreeToTerms ? Color.white.opacity(0.2) : Color.clear)
-                                            .frame(width: 20, height: 20)
-                                            .overlay(
-                                                agreeToTerms ?
+            .background(agreeToTerms ? Color.white.opacity(0.2) : Color.clear)
+            .frame(width: 20, height: 20)
+            .overlay(
+                agreeToTerms ?
         Image(systemName: "checkmark")
         .font(.system(size: 12, weight: .bold))
     .foregroundColor(.white): nil
@@ -213,16 +242,16 @@ struct SignUpView: View {
         HStack(alignment: .top, spacing: 12) {
         Button(action: {sendUpdates.toggle()
         }) {
-        Rectangle()
+        RoundedRectangle(cornerRadius: 2)
         .stroke(.white.opacity(0.6), lineWidth: 1)
-    .background(sendUpdates ? Color.white.opacity(0.2) : Color.clear)
-                                            .frame(width: 20, height: 20)
-                                            .overlay(
-                                                sendUpdates ?
+        .background(sendUpdates ? Color.white.opacity(0.2) : Color.clear)
+        .frame(width: 20, height: 20)
+        .overlay(
+            sendUpdates ?
     Image(systemName: "checkmark")
     .font(.system(size: 12, weight: .bold))
     .foregroundColor(.white): nil
-                                            )
+        )
                                     }
                                     
     Text("Send me updates about new cafes and special offers")
@@ -255,7 +284,7 @@ HStack {
     .disabled(authManager.isLoading)
             .padding(.top, 20)
                             
-                            // Sign in link
+                           
         HStack {
             Text("Already have an account?")
             .foregroundColor(.white.opacity(0.9))
@@ -282,6 +311,52 @@ HStack {
     
     //functions
     private func signUpWithFirebase() {
+        print("=== SIGNUP DEBUG ===")
+        print("Username: '\(username)'")
+        print("Email: '\(email)'")
+        print("Password length: \(newPassword.count)")
+        print("Passwords match: \(newPassword == confirmPassword)")
+        print("Agree to terms: \(agreeToTerms)")
+        
+        // Basic validation check
+        if username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            print("❌ Validation failed: Empty username")
+            errorMessage = "Please enter a username."
+            showAlert = true
+            return
+        }
+        
+        if email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            print("❌ Validation failed: Empty email")
+            errorMessage = "Please enter an email address."
+            showAlert = true
+            return
+        }
+        
+        if newPassword.isEmpty {
+            print("❌ Validation failed: Empty password")
+            errorMessage = "Please enter a password."
+            showAlert = true
+            return
+        }
+        
+        if newPassword != confirmPassword {
+            print("❌ Validation failed: Passwords don't match")
+            errorMessage = "Passwords don't match."
+            showAlert = true
+            return
+        }
+        
+        if !agreeToTerms {
+            print("❌ Validation failed: Terms not agreed")
+            errorMessage = "Please agree to the Terms of Service and Privacy Policy."
+            showAlert = true
+            return
+        }
+        
+        print("✅ Local validation passed, calling Firebase signup")
+        print("==================")
+        
         authManager.signUp(
             username: username,
             email: email,
@@ -291,16 +366,20 @@ HStack {
             sendUpdates: sendUpdates,
             agreeToTerms: agreeToTerms
         ) { result in
+            print("=== SIGNUP RESULT ===")
             switch result {
             case .success(let message):
+                print("✅ Success: \(message)")
                 signUpSuccess = true
                 errorMessage = message
                 showAlert = true
             case .failure(let error):
+                print("❌ Failure: \(error)")
                 signUpSuccess = false
                 errorMessage = error
                 showAlert = true
             }
+            print("====================")
         }
     }
 }

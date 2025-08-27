@@ -32,7 +32,7 @@ struct SigninView: View {
             }
             .animation(.none, value: showSignUp)
             .navigationDestination(isPresented: $navigateToHome) {
-                HomeView()
+                TabBarView()
             }
             .navigationDestination(isPresented: $navigateToOnboarding) {
                 OnboardingView()
@@ -47,8 +47,12 @@ struct SigninView: View {
                 Text(alertMessage)
             }
             .onChange(of: authManager.isAuthenticated) { isAuthenticated in
+                print("Auth state changed: \(isAuthenticated)")
                 if isAuthenticated {
-                    checkUserOnboardingStatus()
+                    // Only call this if we haven't already triggered navigation manually
+                    if !navigateToHome && !navigateToOnboarding {
+                        self.checkUserOnboardingStatus()
+                    }
                 }
             }
         }
@@ -94,7 +98,7 @@ struct SigninView: View {
                         .padding(.bottom, 5)
                         
                         // Signin form
-            VStack(spacing: 6) {
+            VStack(spacing: 5) {
             // Email
             VStack(alignment: .leading, spacing: 5) {
                 HStack {
@@ -109,6 +113,10 @@ struct SigninView: View {
             .padding(.vertical, 12)
             .padding(.horizontal, 12)
             .foregroundColor(.white)
+            .textContentType(.emailAddress)
+            .keyboardType(.emailAddress)
+            .autocorrectionDisabled()
+            .textInputAutocapitalization(.never)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color.clear)
@@ -117,8 +125,6 @@ struct SigninView: View {
                             .stroke(Color(hex: "FFFFFF"), lineWidth: 0.5)
                     )
             )
-            .keyboardType(.emailAddress)
-            .autocapitalization(.none)
             .disabled(authManager.isLoading || isBiometricLoading)
             }
                             
@@ -136,6 +142,9 @@ struct SigninView: View {
         .padding(.vertical, 12)
         .padding(.horizontal, 12)
         .foregroundColor(.white)
+        .textContentType(.password)
+        .autocorrectionDisabled()
+        .textInputAutocapitalization(.never)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color.clear)
@@ -220,8 +229,8 @@ struct SigninView: View {
                             .scaleEffect(0.8)
                     }
                 }
-                .frame(width: 60, height: 60) // Ensure proper tap area
-                .contentShape(Rectangle()) // Make entire area tappable
+                .frame(width: 60, height: 60)
+                .contentShape(Rectangle())
             }
             .disabled(authManager.isLoading || isBiometricLoading)
             .opacity((authManager.isLoading || isBiometricLoading) ? 0.5 : 1.0)
@@ -242,7 +251,7 @@ struct SigninView: View {
             .underline()
             .disabled(authManager.isLoading || isBiometricLoading)
                             }
-                            .padding(.top, 30)
+                            .padding(.top, 10)
                         }
                         .padding(.horizontal, 40)
                         
@@ -281,9 +290,11 @@ struct SigninView: View {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let message):
-                    print(message)
-                    // Trigger navigation after successful sign in
-                    checkUserOnboardingStatus()
+                    print("Sign in successful: \(message)")
+                    // Small delay to ensure auth state is updated
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        self.checkUserOnboardingStatus()
+                    }
                 case .failure(let errorMessage):
                     showAlert(title: "Sign In Failed", message: errorMessage)
                 }
@@ -317,7 +328,7 @@ struct SigninView: View {
                     successFeedback.notificationOccurred(.success)
                     
                     // Trigger navigation after successful biometric auth
-                    checkUserOnboardingStatus()
+                    self.checkUserOnboardingStatus()
                 case .failure(let error):
                     // Error haptic feedback
                     let errorFeedback = UINotificationFeedbackGenerator()
@@ -351,13 +362,40 @@ struct SigninView: View {
     }
     
     private func checkUserOnboardingStatus() {
+        print("Checking user onboarding status...")
+        
         // Check if user has completed onboarding before
         let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+        print("Has completed onboarding: \(hasCompletedOnboarding)")
         
-        if hasCompletedOnboarding {
-            navigateToHome = true
-        } else {
-            navigateToOnboarding = true
+        // Also check if user exists in Firestore (for users who signed up before)
+        guard let user = authManager.currentUser else {
+            print("No current user found, navigating to onboarding")
+            DispatchQueue.main.async {
+                self.navigateToHome = false
+                self.navigateToOnboarding = true
+            }
+            return
+        }
+        
+        print("Current user: \(user.email ?? "unknown")")
+        
+        // For existing users, check if they have profile data (indication of previous onboarding)
+        authManager.getUserData { userData in
+            DispatchQueue.main.async {
+                print("User data retrieved: \(userData != nil)")
+                if hasCompletedOnboarding || userData != nil {
+                    // User has completed onboarding before or has profile data
+                    print("Navigating to home")
+                    self.navigateToOnboarding = false
+                    self.navigateToHome = true
+                } else {
+                    // First time user - show onboarding
+                    print("Navigating to onboarding")
+                    self.navigateToHome = false
+                    self.navigateToOnboarding = true
+                }
+            }
         }
     }
     
