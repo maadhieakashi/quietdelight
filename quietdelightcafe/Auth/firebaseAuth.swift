@@ -9,8 +9,10 @@
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
+import FirebaseStorage
 import LocalAuthentication
 import Security
+import UIKit
 
 
 enum AuthResult {
@@ -18,7 +20,7 @@ enum AuthResult {
     case failure(String)
 }
 
-//UserData Model
+// user Model
 struct UserData {
     let username: String
     let email: String
@@ -26,7 +28,7 @@ struct UserData {
     let sendUpdates: Bool
 }
 
-
+// autherror
 enum AuthError: LocalizedError {
     case emptyFields
     case emptyEmail
@@ -59,13 +61,13 @@ enum AuthError: LocalizedError {
     }
 }
 
-//Firebase Authentiction
+//firebase authenticate
 class FirebaseAuthManager: ObservableObject {
     
  
     static let shared = FirebaseAuthManager()
     
-  
+
     private let db = Firestore.firestore()
     private let keychainService = "QuietDelightCredentials"
     
@@ -73,19 +75,23 @@ class FirebaseAuthManager: ObservableObject {
     @Published var currentUser: User?
     @Published var isAuthenticated = false
     
-    
+    // MARK: - Initialization
     private init() {
+        self.isLoading = true
         self.currentUser = Auth.auth().currentUser
         self.isAuthenticated = currentUser != nil
         
         // Listen for auth state changes
-//        Auth.auth().addStateDidChangeListener { [weak self] _, user in
-//            DispatchQueue.main.async {
-//                self?.currentUser = user
-//                self?.isAuthenticated = user != nil
-//            }
-//        }
+        Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            DispatchQueue.main.async {
+                self?.currentUser = user
+                self?.isAuthenticated = user != nil
+                self?.isLoading = false
+            }
+        }
     }
+    
+    // MARK: - Authentication State Management
     
     func checkAuthenticationState() {
         if let user = Auth.auth().currentUser {
@@ -97,7 +103,7 @@ class FirebaseAuthManager: ObservableObject {
         }
     }
     
-    // signup
+    // MARK: - Sign Up Methods
     
     func signUp(
         username: String,
@@ -117,7 +123,7 @@ class FirebaseAuthManager: ObservableObject {
             confirmPassword: confirmPassword,
             agreeToTerms: agreeToTerms
         ) else {
-            // Validation passed
+            // Validation passed, proceed with sign up
             performSignUp(
                 userData: UserData(
                     username: username,
@@ -160,7 +166,7 @@ class FirebaseAuthManager: ObservableObject {
                 if let error = error {
                     completion(.failure(error))
                 } else if let user = result?.user {
-                   
+                    // Update display name if provided
                     if let displayName = displayName {
                         let changeRequest = user.createProfileChangeRequest()
                         changeRequest.displayName = displayName
@@ -176,6 +182,7 @@ class FirebaseAuthManager: ObservableObject {
         }
     }
     
+    // MARK: - Sign In Methods
     
     func signIn(email: String, password: String, completion: @escaping (AuthResult) -> Void) {
         isLoading = true
@@ -194,7 +201,7 @@ class FirebaseAuthManager: ObservableObject {
                     return
                 }
                 
-              
+                // Save credentials for biometric auth and update last login
                 self?.saveCredentialsToKeychain(email: email, password: password)
                 self?.updateLastLoginTime()
                 completion(.success("Signed in successfully!"))
@@ -232,7 +239,7 @@ class FirebaseAuthManager: ObservableObject {
         }
     }
     
-    //signout
+    // Sign Out Method
     
     func signOut(completion: @escaping (AuthResult) -> Void) {
         do {
@@ -247,7 +254,7 @@ class FirebaseAuthManager: ObservableObject {
         }
     }
     
-    // passwordReset
+    // MARK: - Password Reset Methods
     
     func resetPassword(email: String, completion: @escaping (AuthResult) -> Void) {
         Auth.auth().sendPasswordReset(withEmail: email) { error in
@@ -283,7 +290,7 @@ class FirebaseAuthManager: ObservableObject {
         }
     }
     
-    // account
+    // Account Management
     
     func deleteAccount(completion: @escaping (AuthResult) -> Void) {
         guard let user = currentUser else {
@@ -298,7 +305,7 @@ class FirebaseAuthManager: ObservableObject {
                 return
             }
             
-            
+            // Then delete the Firebase Auth account
             user.delete { error in
                 DispatchQueue.main.async {
                     if let error = error {
@@ -320,13 +327,14 @@ class FirebaseAuthManager: ObservableObject {
             return
         }
         
-        
+        // Delete user document from Firestore first
         db.collection("users").document(user.uid).delete { [weak self] error in
             if let error = error {
                 completion(.failure(error))
                 return
             }
-        
+            
+            // Then delete the Firebase Auth account
             user.delete { error in
                 DispatchQueue.main.async {
                     if let error = error {
@@ -342,7 +350,7 @@ class FirebaseAuthManager: ObservableObject {
         }
     }
     
-    // Biometric
+    //Biometric Authentication
     
     func authenticateWithBiometrics(completion: @escaping (Result<User, Error>) -> Void) {
         let context = LAContext()
@@ -358,7 +366,7 @@ class FirebaseAuthManager: ObservableObject {
         context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { [weak self] success, authenticationError in
             DispatchQueue.main.async {
                 if success {
-                    
+                    // Try to retrieve saved credentials and sign in
                     if let credentials = self?.getCredentialsFromKeychain() {
                         self?.signInWithEmailPassword(email: credentials.email, password: credentials.password, completion: completion)
                     } else {
@@ -387,7 +395,7 @@ class FirebaseAuthManager: ObservableObject {
         return context.biometryType
     }
     
-    // MARK: - Profile Management
+    // Profile manager
     
     func updateUserProfile(displayName: String? = nil, photoURL: URL? = nil, completion: @escaping (Result<Void, Error>) -> Void) {
         guard let user = Auth.auth().currentUser else {
@@ -410,8 +418,69 @@ class FirebaseAuthManager: ObservableObject {
                 if let error = error {
                     completion(.failure(error))
                 } else {
-                    completion(.success(()))
+                    // Update current user
+                    self.currentUser = Auth.auth().currentUser
+                    
+                    // Also update Firestore
+                    self.saveProfileToFirestore(displayName: displayName, profileImageURL: photoURL?.absoluteString, completion: completion)
                 }
+            }
+        }
+    }
+    
+    func uploadProfileImage(_ image: UIImage, completion: @escaping (Result<URL, Error>) -> Void) {
+        guard let user = Auth.auth().currentUser else {
+            completion(.failure(AuthError.userNotFound))
+            return
+        }
+        
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            completion(.failure(NSError(domain: "ImageError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to convert image to data"])))
+            return
+        }
+        
+        let storage = Storage.storage()
+        let storageRef = storage.reference()
+        let profileImageRef = storageRef.child("profile_images/\(user.uid).jpg")
+        
+        profileImageRef.putData(imageData, metadata: nil) { metadata, error in
+            if let error = error {
+                DispatchQueue.main.async {
+                    completion(.failure(error))
+                }
+                return
+            }
+            
+            profileImageRef.downloadURL { url, error in
+                DispatchQueue.main.async {
+                    if let error = error {
+                        completion(.failure(error))
+                    } else if let url = url {
+                        completion(.success(url))
+                    } else {
+                        completion(.failure(NSError(domain: "URLError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to get download URL"])))
+                    }
+                }
+            }
+        }
+    }
+    
+    func updateProfileWithImage(_ image: UIImage, displayName: String? = nil, completion: @escaping (Result<Void, Error>) -> Void) {
+        uploadProfileImage(image) { [weak self] result in
+            switch result {
+            case .success(let url):
+                // Update Firebase Auth profile
+                self?.updateUserProfile(displayName: displayName, photoURL: url) { authResult in
+                    switch authResult {
+                    case .success:
+                        // Also save to Firestore
+                        self?.saveProfileToFirestore(displayName: displayName, profileImageURL: url.absoluteString, completion: completion)
+                    case .failure(let error):
+                        completion(.failure(error))
+                    }
+                }
+            case .failure(let error):
+                completion(.failure(error))
             }
         }
     }
@@ -454,7 +523,7 @@ class FirebaseAuthManager: ObservableObject {
                 if let error = error {
                     completion(.failure(error))
                 } else {
-                   
+                    // Update saved password in keychain if exists
                     if let credentials = self?.getCredentialsFromKeychain() {
                         self?.saveCredentialsToKeychain(email: credentials.email, password: newPassword)
                     }
@@ -522,7 +591,7 @@ class FirebaseAuthManager: ObservableObject {
         }
     }
     
-    //Firestore
+    // firestore
     
     private func performSignUp(userData: UserData, password: String, completion: @escaping (AuthResult) -> Void) {
         isLoading = true
@@ -541,7 +610,7 @@ class FirebaseAuthManager: ObservableObject {
                     return
                 }
                 
-            
+                // Save additional user data to Firestore
                 self?.saveUserDataToFirestore(user: user, userData: userData, completion: completion)
             }
         }
@@ -568,6 +637,35 @@ class FirebaseAuthManager: ObservableObject {
                 } else {
                     print("User data saved successfully to Firestore")
                     completion(.success("Account created successfully! Please sign in."))
+                }
+            }
+        }
+    }
+    
+    private func saveProfileToFirestore(displayName: String?, profileImageURL: String?, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let user = currentUser else {
+            completion(.failure(AuthError.userNotFound))
+            return
+        }
+        
+        var updateData: [String: Any] = [
+            "lastUpdatedAt": Timestamp()
+        ]
+        
+        if let displayName = displayName {
+            updateData["username"] = displayName
+        }
+        
+        if let profileImageURL = profileImageURL {
+            updateData["profilePicture"] = profileImageURL
+        }
+        
+        db.collection("users").document(user.uid).updateData(updateData) { error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    completion(.failure(error))
+                } else {
+                    completion(.success(()))
                 }
             }
         }
@@ -618,7 +716,7 @@ class FirebaseAuthManager: ObservableObject {
         }
     }
     
-    // keychain
+    //Keychain Operations
     
     private func saveCredentialsToKeychain(email: String, password: String) {
         let credentials = ["email": email, "password": password]
@@ -676,7 +774,7 @@ class FirebaseAuthManager: ObservableObject {
         SecItemDelete(query as CFDictionary)
     }
     
-    //Validation
+    // MARK: - Validation Methods
     
     private func validateSignUpInput(
         username: String,
@@ -714,7 +812,7 @@ class FirebaseAuthManager: ObservableObject {
             return "You must agree to the Terms of Service and Privacy Policy."
         }
         
-        return nil // Novalidation errors
+        return nil // No validation errors
     }
     
     private func isValidEmail(_ email: String) -> Bool {
@@ -754,5 +852,4 @@ protocol AuthenticationStateDelegate: AnyObject {
     func authenticationStateDidChange(isAuthenticated: Bool)
     func authenticationDidFail(with error: Error)
 }
-
 
