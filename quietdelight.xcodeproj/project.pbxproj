@@ -35,25 +35,25 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		53C078FB2E52DDCE00A1B763 /* quietdelightcafe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = quietdelightcafe.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		53C079082E52DDCF00A1B763 /* quietdelightcafeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = quietdelightcafeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		53C079122E52DDCF00A1B763 /* quietdelightcafeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = quietdelightcafeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		53C078FB2E52DDCE00A1B763 /* quietdelight.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = quietdelight.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		53C079082E52DDCF00A1B763 /* quietdelightTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = quietdelightTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		53C079122E52DDCF00A1B763 /* quietdelightUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = quietdelightUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		53C078FD2E52DDCE00A1B763 /* quietdelightcafe */ = {
+		53C078FD2E52DDCE00A1B763 /* quietdelight */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = quietdelightcafe;
+			path = quietdelight;
 			sourceTree = "<group>";
 		};
-		53C0790B2E52DDCF00A1B763 /* quietdelightcafeTests */ = {
+		53C0790B2E52DDCF00A1B763 /* quietdelightTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = quietdelightcafeTests;
+			path = quietdelightTests;
 			sourceTree = "<group>";
 		};
-		53C079152E52DDCF00A1B763 /* quietdelightcafeUITests */ = {
+		53C079152E52DDCF00A1B763 /* quietdelightUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = quietdelightcafeUITests;
+			path = quietdelightUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -101,9 +101,9 @@
 		53C078F22E52DDCE00A1B763 = {
 			isa = PBXGroup;
 			children = (
-				53C078FD2E52DDCE00A1B763 /* quietdelightcafe */,
-				53C0790B2E52DDCF00A1B763 /* quietdelightcafeTests */,
-				53C079152E52DDCF00A1B763 /* quietdelightcafeUITests */,
+				53C078FD2E52DDCE00A1B763 /* quietdelight */,
+				53C0790B2E52DDCF00A1B763 /* quietdelightTests */,
+				53C079152E52DDCF00A1B763 /* quietdelightUITests */,
 				537F97AD2E557B710059A38C /* Frameworks */,
 				53C078FC2E52DDCE00A1B763 /* Products */,
 			);
@@ -112,9 +112,9 @@
 		53C078FC2E52DDCE00A1B763 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				53C078FB2E52DDCE00A1B763 /* quietdelightcafe.app */,
-				53C079082E52DDCF00A1B763 /* quietdelightcafeTests.xctest */,
-				53C079122E52DDCF00A1B763 /* quietdelightcafeUITests.xctest */,
+				53C078FB2E52DDCE00A1B763 /* quietdelight.app */,
+				53C079082E52DDCF00A1B763 /* quietdelightTests.xctest */,
+				53C079122E52DDCF00A1B763 /* quietdelightUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -122,9 +122,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		53C078FA2E52DDCE00A1B763 /* quietdelightcafe */ = {
+		53C078FA2E52DDCE00A1B763 /* quietdelight */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 53C0791C2E52DDCF00A1B763 /* Build configuration list for PBXNativeTarget "quietdelightcafe" */;
+			buildConfigurationList = 53C0791C2E52DDCF00A1B763 /* Build configuration list for PBXNativeTarget "quietdelight" */;
 			buildPhases = (
 				53C078F72E52DDCE00A1B763 /* Sources */,
 				53C078F82E52DDCE00A1B763 /* Frameworks */,
@@ -135,9 +135,9 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				53C078FD2E52DDCE00A1B763 /* quietdelightcafe */,
+				53C078FD2E52DDCE00A1B763 /* quietdelight */,
 			);
-			name = quietdelightcafe;
+			name = quietdelight;
 			packageProductDependencies = (
 				537F97AE2E557B710059A38C /* FirebaseAuth */,
 				537F97B02E557B770059A38C /* FirebaseAnalyticsCore */,
@@ -149,12 +149,12 @@
 				537F98492E55ABA80059A38C /* FirebaseAppCheck */,
 			);
 			productName = quietdelightcafe;
-			productReference = 53C078FB2E52DDCE00A1B763 /* quietdelightcafe.app */;
+			productReference = 53C078FB2E52DDCE00A1B763 /* quietdelight.app */;
 			productType = "com.apple.product-type.application";
 		};
-		53C079072E52DDCF00A1B763 /* quietdelightcafeTests */ = {
+		53C079072E52DDCF00A1B763 /* quietdelightTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 53C0791F2E52DDCF00A1B763 /* Build configuration list for PBXNativeTarget "quietdelightcafeTests" */;
+			buildConfigurationList = 53C0791F2E52DDCF00A1B763 /* Build configuration list for PBXNativeTarget "quietdelightTests" */;
 			buildPhases = (
 				53C079042E52DDCF00A1B763 /* Sources */,
 				53C079052E52DDCF00A1B763 /* Frameworks */,
@@ -166,18 +166,18 @@
 				53C0790A2E52DDCF00A1B763 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				53C0790B2E52DDCF00A1B763 /* quietdelightcafeTests */,
+				53C0790B2E52DDCF00A1B763 /* quietdelightTests */,
 			);
-			name = quietdelightcafeTests;
+			name = quietdelightTests;
 			packageProductDependencies = (
 			);
 			productName = quietdelightcafeTests;
-			productReference = 53C079082E52DDCF00A1B763 /* quietdelightcafeTests.xctest */;
+			productReference = 53C079082E52DDCF00A1B763 /* quietdelightTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		53C079112E52DDCF00A1B763 /* quietdelightcafeUITests */ = {
+		53C079112E52DDCF00A1B763 /* quietdelightUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 53C079222E52DDCF00A1B763 /* Build configuration list for PBXNativeTarget "quietdelightcafeUITests" */;
+			buildConfigurationList = 53C079222E52DDCF00A1B763 /* Build configuration list for PBXNativeTarget "quietdelightUITests" */;
 			buildPhases = (
 				53C0790E2E52DDCF00A1B763 /* Sources */,
 				53C0790F2E52DDCF00A1B763 /* Frameworks */,
@@ -189,13 +189,13 @@
 				53C079142E52DDCF00A1B763 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				53C079152E52DDCF00A1B763 /* quietdelightcafeUITests */,
+				53C079152E52DDCF00A1B763 /* quietdelightUITests */,
 			);
-			name = quietdelightcafeUITests;
+			name = quietdelightUITests;
 			packageProductDependencies = (
 			);
 			productName = quietdelightcafeUITests;
-			productReference = 53C079122E52DDCF00A1B763 /* quietdelightcafeUITests.xctest */;
+			productReference = 53C079122E52DDCF00A1B763 /* quietdelightUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -221,7 +221,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 53C078F62E52DDCE00A1B763 /* Build configuration list for PBXProject "quietdelightcafe" */;
+			buildConfigurationList = 53C078F62E52DDCE00A1B763 /* Build configuration list for PBXProject "quietdelight" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -238,9 +238,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				53C078FA2E52DDCE00A1B763 /* quietdelightcafe */,
-				53C079072E52DDCF00A1B763 /* quietdelightcafeTests */,
-				53C079112E52DDCF00A1B763 /* quietdelightcafeUITests */,
+				53C078FA2E52DDCE00A1B763 /* quietdelight */,
+				53C079072E52DDCF00A1B763 /* quietdelightTests */,
+				53C079112E52DDCF00A1B763 /* quietdelightUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -296,12 +296,12 @@
 /* Begin PBXTargetDependency section */
 		53C0790A2E52DDCF00A1B763 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 53C078FA2E52DDCE00A1B763 /* quietdelightcafe */;
+			target = 53C078FA2E52DDCE00A1B763 /* quietdelight */;
 			targetProxy = 53C079092E52DDCF00A1B763 /* PBXContainerItemProxy */;
 		};
 		53C079142E52DDCF00A1B763 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 53C078FA2E52DDCE00A1B763 /* quietdelightcafe */;
+			target = 53C078FA2E52DDCE00A1B763 /* quietdelight */;
 			targetProxy = 53C079132E52DDCF00A1B763 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -496,7 +496,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/quietdelightcafe.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/quietdelightcafe";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/quietdelight.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/quietdelight";
 			};
 			name = Debug;
 		};
@@ -514,7 +514,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/quietdelightcafe.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/quietdelightcafe";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/quietdelight.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/quietdelight";
 			};
 			name = Release;
 		};
@@ -553,7 +553,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		53C078F62E52DDCE00A1B763 /* Build configuration list for PBXProject "quietdelightcafe" */ = {
+		53C078F62E52DDCE00A1B763 /* Build configuration list for PBXProject "quietdelight" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				53C0791A2E52DDCF00A1B763 /* Debug */,
@@ -562,7 +562,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		53C0791C2E52DDCF00A1B763 /* Build configuration list for PBXNativeTarget "quietdelightcafe" */ = {
+		53C0791C2E52DDCF00A1B763 /* Build configuration list for PBXNativeTarget "quietdelight" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				53C0791D2E52DDCF00A1B763 /* Debug */,
@@ -571,7 +571,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		53C0791F2E52DDCF00A1B763 /* Build configuration list for PBXNativeTarget "quietdelightcafeTests" */ = {
+		53C0791F2E52DDCF00A1B763 /* Build configuration list for PBXNativeTarget "quietdelightTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				53C079202E52DDCF00A1B763 /* Debug */,
@@ -580,7 +580,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		53C079222E52DDCF00A1B763 /* Build configuration list for PBXNativeTarget "quietdelightcafeUITests" */ = {
+		53C079222E52DDCF00A1B763 /* Build configuration list for PBXNativeTarget "quietdelightUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				53C079232E52DDCF00A1B763 /* Debug */,

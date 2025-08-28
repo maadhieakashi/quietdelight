@@ -9,7 +9,7 @@ import SwiftUI
 import Firebase
 
 @main
-struct quietdelightcafeApp: App {
+struct quietdelightApp: App {
     init() {
         FirebaseApp.configure()
     }
