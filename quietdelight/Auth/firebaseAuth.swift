@@ -75,23 +75,37 @@ class FirebaseAuthManager: ObservableObject {
     @Published var currentUser: User?
     @Published var isAuthenticated = false
     
-    // MARK: - Initialization
+    // Store the auth state listener handle
+    private var authStateHandle: AuthStateDidChangeListenerHandle?
+    
+    // Initialization
     private init() {
         self.isLoading = true
         self.currentUser = Auth.auth().currentUser
         self.isAuthenticated = currentUser != nil
         
-        // Listen for auth state changes
-        Auth.auth().addStateDidChangeListener { [weak self] _, user in
+        // Listen for auth state changes and store the handle
+        self.authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             DispatchQueue.main.async {
+                print("Auth state changed - User: \(user?.email ?? "nil")")
                 self?.currentUser = user
                 self?.isAuthenticated = user != nil
-                self?.isLoading = false
+                // Only set loading to false after initial check
+                if self?.isLoading == true {
+                    self?.isLoading = false
+                }
             }
         }
     }
     
-    // MARK: - Authentication State Management
+    // Clean up the listener when the manager is deallocated
+    deinit {
+        if let handle = authStateHandle {
+            Auth.auth().removeStateDidChangeListener(handle)
+        }
+    }
+    
+    //Authentication State Management
     
     func checkAuthenticationState() {
         if let user = Auth.auth().currentUser {
@@ -182,9 +196,10 @@ class FirebaseAuthManager: ObservableObject {
         }
     }
     
-    // MARK: - Sign In Methods
+    //signin
     
     func signIn(email: String, password: String, completion: @escaping (AuthResult) -> Void) {
+        print("Starting sign in process for: \(email)")
         isLoading = true
         
         Auth.auth().signIn(withEmail: email, password: password) { [weak self] authResult, error in
@@ -192,14 +207,22 @@ class FirebaseAuthManager: ObservableObject {
                 self?.isLoading = false
                 
                 if let error = error {
+                    print("Sign in error: \(error.localizedDescription)")
                     completion(.failure(self?.handleAuthError(error) ?? "Sign in failed"))
                     return
                 }
                 
-                guard authResult?.user != nil else {
+                guard let user = authResult?.user else {
+                    print("No user returned from sign in")
                     completion(.failure("Failed to sign in. Please try again."))
                     return
                 }
+                
+                print("Sign in successful for user: \(user.email ?? "unknown")")
+                
+                // Update authentication state
+                self?.currentUser = user
+                self?.isAuthenticated = true
                 
                 // Save credentials for biometric auth and update last login
                 self?.saveCredentialsToKeychain(email: email, password: password)
@@ -254,7 +277,7 @@ class FirebaseAuthManager: ObservableObject {
         }
     }
     
-    // MARK: - Password Reset Methods
+    // Password Reset Methods
     
     func resetPassword(email: String, completion: @escaping (AuthResult) -> Void) {
         Auth.auth().sendPasswordReset(withEmail: email) { error in
@@ -366,14 +389,19 @@ class FirebaseAuthManager: ObservableObject {
         context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { [weak self] success, authenticationError in
             DispatchQueue.main.async {
                 if success {
+                    print("Biometric authentication successful")
                     // Try to retrieve saved credentials and sign in
                     if let credentials = self?.getCredentialsFromKeychain() {
+                        print("Retrieved credentials from keychain for: \(credentials.email)")
                         self?.signInWithEmailPassword(email: credentials.email, password: credentials.password, completion: completion)
                     } else {
+                        print("No saved credentials found in keychain")
                         completion(.failure(AuthError.noSavedCredentials))
                     }
                 } else {
+                    print("Biometric authentication failed")
                     if let error = authenticationError {
+                        print("Biometric error: \(error.localizedDescription)")
                         completion(.failure(error))
                     } else {
                         completion(.failure(AuthError.biometricAuthFailed))
@@ -774,7 +802,7 @@ class FirebaseAuthManager: ObservableObject {
         SecItemDelete(query as CFDictionary)
     }
     
-    // MARK: - Validation Methods
+    // Validation Methods
     
     private func validateSignUpInput(
         username: String,
@@ -852,4 +880,3 @@ protocol AuthenticationStateDelegate: AnyObject {
     func authenticationStateDidChange(isAuthenticated: Bool)
     func authenticationDidFail(with error: Error)
 }
-
