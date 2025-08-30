@@ -117,7 +117,7 @@ class FirebaseAuthManager: ObservableObject {
         }
     }
     
-    // MARK: - Sign Up Methods
+    //Sign Up Methods
     
     func signUp(
         username: String,
