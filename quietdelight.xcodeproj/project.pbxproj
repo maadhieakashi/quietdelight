@@ -15,7 +15,7 @@
 		537F98462E55AB7F0059A38C /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 537F98452E55AB7F0059A38C /* FirebaseAnalytics */; };
 		537F98482E55AB980059A38C /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = 537F98472E55AB980059A38C /* FirebaseAI */; };
 		537F984A2E55ABA80059A38C /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 537F98492E55ABA80059A38C /* FirebaseAppCheck */; };
-		A622AD992E62E6CA001A2798 /* CafeModel.xcdatamodeld in Resources */ = {isa = PBXBuildFile; fileRef = A622AD982E62E6CA001A2798 /* CafeModel.xcdatamodeld */; };
+		A622ADB02E62EDFF001A2798 /* CafeModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A622ADAE2E62EDFF001A2798 /* CafeModel.xcdatamodeld */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -39,7 +39,7 @@
 		53C078FB2E52DDCE00A1B763 /* quietdelight.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = quietdelight.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		53C079082E52DDCF00A1B763 /* quietdelightTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = quietdelightTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		53C079122E52DDCF00A1B763 /* quietdelightUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = quietdelightUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		A622AD972E62E6CA001A2798 /* CafeModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = CafeModel.xcdatamodel; sourceTree = "<group>"; };
+		A622ADAF2E62EDFF001A2798 /* CafeModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = CafeModel.xcdatamodel; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -103,7 +103,7 @@
 		53C078F22E52DDCE00A1B763 = {
 			isa = PBXGroup;
 			children = (
-				A622AD982E62E6CA001A2798 /* CafeModel.xcdatamodeld */,
+				A622ADAE2E62EDFF001A2798 /* CafeModel.xcdatamodeld */,
 				53C078FD2E52DDCE00A1B763 /* quietdelight */,
 				53C0790B2E52DDCF00A1B763 /* quietdelightTests */,
 				53C079152E52DDCF00A1B763 /* quietdelightUITests */,
@@ -253,7 +253,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A622AD992E62E6CA001A2798 /* CafeModel.xcdatamodeld in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -278,6 +277,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A622ADB02E62EDFF001A2798 /* CafeModel.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -650,14 +650,15 @@
 /* End XCSwiftPackageProductDependency section */
 
 /* Begin XCVersionGroup section */
-		A622AD982E62E6CA001A2798 /* CafeModel.xcdatamodeld */ = {
+		A622ADAE2E62EDFF001A2798 /* CafeModel.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
-				A622AD972E62E6CA001A2798 /* CafeModel.xcdatamodel */,
+				A622ADAF2E62EDFF001A2798 /* CafeModel.xcdatamodel */,
 			);
-			currentVersion = A622AD972E62E6CA001A2798 /* CafeModel.xcdatamodel */;
+			currentVersion = A622ADAF2E62EDFF001A2798 /* CafeModel.xcdatamodel */;
 			path = CafeModel.xcdatamodeld;
 			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
 		};
 /* End XCVersionGroup section */
 	};
