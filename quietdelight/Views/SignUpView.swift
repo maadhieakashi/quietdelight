@@ -320,41 +320,41 @@ HStack {
         
         // Basic validation check
         if username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            print("❌ Validation failed: Empty username")
+            print(" Validation failed: Empty username")
             errorMessage = "Please enter a username."
             showAlert = true
             return
         }
         
         if email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            print("❌ Validation failed: Empty email")
+            print(" Validation failed: Empty email")
             errorMessage = "Please enter an email address."
             showAlert = true
             return
         }
         
         if newPassword.isEmpty {
-            print("❌ Validation failed: Empty password")
+            print("Validation failed: Empty password")
             errorMessage = "Please enter a password."
             showAlert = true
             return
         }
         
         if newPassword != confirmPassword {
-            print("❌ Validation failed: Passwords don't match")
+            print(" Validation failed: Passwords don't match")
             errorMessage = "Passwords don't match."
             showAlert = true
             return
         }
         
         if !agreeToTerms {
-            print("❌ Validation failed: Terms not agreed")
+            print("Validation failed: Terms not agreed")
             errorMessage = "Please agree to the Terms of Service and Privacy Policy."
             showAlert = true
             return
         }
         
-        print("✅ Local validation passed, calling Firebase signup")
+        print("Local validation passed, calling Firebase signup")
         print("==================")
         
         authManager.signUp(
@@ -369,12 +369,12 @@ HStack {
             print("=== SIGNUP RESULT ===")
             switch result {
             case .success(let message):
-                print("✅ Success: \(message)")
+                print("Success: \(message)")
                 signUpSuccess = true
                 errorMessage = message
                 showAlert = true
             case .failure(let error):
-                print("❌ Failure: \(error)")
+                print("Failure: \(error)")
                 signUpSuccess = false
                 errorMessage = error
                 showAlert = true

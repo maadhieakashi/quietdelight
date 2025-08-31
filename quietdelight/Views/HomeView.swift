@@ -86,6 +86,7 @@ struct TabBarView: View {
 struct HomeContentView: View {
     @StateObject private var coreDataManager = CoreDataManager.shared
     @StateObject private var firebaseManager = FirebaseManager.shared
+    private let authManager = FirebaseAuthManager.shared
     @State private var searchText = ""
     @State private var selectedPlace: PlaceData?
     @State private var showPlaceDetail = false
@@ -94,23 +95,23 @@ struct HomeContentView: View {
     @State private var workFriendlyPlaces: [PlaceData] = []
     @State private var selectedFilter: String? = nil
     
-    // Sample user data - replace with actual user data from Firebase
-    @State private var userName = "Suzume Iwato"
-    @State private var userImageURL = "" // Add actual user image URL
+    //user data in firebse
+    @State private var userName = ""
+    @State private var userImageURL = ""
     
     let quickFilters = ["Quiet", "Fast WIFI", "Power Outlet"]
     
     var filteredPlaces: [PlaceData] {
         var places = workFriendlyPlaces
         
-        // Apply search filter
+        // search filter
         if !searchText.isEmpty {
             places = places.filter { place in
                 place.name.localizedCaseInsensitiveContains(searchText)
             }
         }
         
-        // Apply quick filter
+        // quick filter
         if let filter = selectedFilter {
             switch filter {
             case "Quiet":
@@ -139,24 +140,34 @@ struct HomeContentView: View {
                                 .font(.title2)
                                 .fontWeight(.semibold)
                                 .foregroundColor(.primary)
-                            
+
                             Spacer()
-                            
-                            // User Profile Image
-                            AsyncImage(url: URL(string: userImageURL)) { image in
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                            } placeholder: {
+
+                            // User Propic or Default
+                            if let url = URL(string: userImageURL), !userImageURL.isEmpty {
+                                AsyncImage(url: url) { image in
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                } placeholder: {
+                                    Circle()
+                                        .fill(Color.gray.opacity(0.3))
+                                        .overlay(
+                                            Image(systemName: "person.fill")
+                                                .foregroundColor(.gray)
+                                        )
+                                }
+                                .frame(width: 50, height: 50)
+                                .clipShape(Circle())
+                            } else {
                                 Circle()
                                     .fill(Color.gray.opacity(0.3))
                                     .overlay(
                                         Image(systemName: "person.fill")
                                             .foregroundColor(.gray)
                                     )
+                                    .frame(width: 50, height: 50)
                             }
-                            .frame(width: 50, height: 50)
-                            .clipShape(Circle())
                         }
                         
                         // Stats Cards
@@ -183,7 +194,7 @@ struct HomeContentView: View {
                         .cornerRadius(25)
                         
                         Button(action: {
-                            // Filter action
+                            // Filter
                         }) {
                             Image(systemName: "slider.horizontal.3")
                                 .foregroundColor(.white)
@@ -194,7 +205,7 @@ struct HomeContentView: View {
                     }
                     .padding(.horizontal, 20)
                     
-                    // Quick Filter Tags
+                    // Quick filter Tags
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 10) {
                             ForEach(quickFilters, id: \.self) { filter in
@@ -225,7 +236,7 @@ struct HomeContentView: View {
                             Spacer()
                             
                             Button("See All") {
-                                // Navigate to places list
+                                
                             }
                             .foregroundColor(Color(hex: "5A3529"))
                             .font(.subheadline)
@@ -265,24 +276,39 @@ struct HomeContentView: View {
     }
     
     private func loadUserData() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        // Load user name
-        if let displayName = Auth.auth().currentUser?.displayName {
-            userName = displayName
+        guard let user = Auth.auth().currentUser else {
+            userName = "Guest"
+            userImageURL = ""
+            return
         }
-        
-        // Load user profile image
-        if let photoURL = Auth.auth().currentUser?.photoURL {
-            userImageURL = photoURL.absoluteString
+
+        // Fetch userdata firestore
+        authManager.getUserData { userData in
+            DispatchQueue.main.async {
+                if let firestoreUsername = userData?["username"] as? String, !firestoreUsername.isEmpty {
+                    self.userName = firestoreUsername
+                } else if let displayName = user.displayName, !displayName.isEmpty {
+                    self.userName = displayName
+                } else {
+                    self.userName = "Guest"
+                }
+
+                if let profilePictureURL = userData?["profilePicture"] as? String, !profilePictureURL.isEmpty {
+                    self.userImageURL = profilePictureURL
+                } else if let photoURL = user.photoURL {
+                    self.userImageURL = photoURL.absoluteString
+                } else {
+                    self.userImageURL = ""
+                }
+            }
         }
-        
+
         // Load favorites count
-        let favorites = coreDataManager.fetchFavorites(for: userId)
+        let favorites = coreDataManager.fetchFavorites(for: user.uid)
         favoriteCount = favorites.count
-        
+
         // Load reviews count from Firebase
-        firebaseManager.fetchUserReviewCount(for: userId) { count in
+        firebaseManager.fetchUserReviewCount(for: user.uid) { count in
             DispatchQueue.main.async {
                 self.reviewCount = count
             }
@@ -425,11 +451,10 @@ struct HomePlaceCard: View {
     }
 }
 
-// Extension to add fetchUserReviewCount to FirebaseManager
+// Extension to add fetchUserReviewCount
 extension FirebaseManager {
     func fetchUserReviewCount(for userId: String, completion: @escaping (Int) -> Void) {
-    // Expose db as public in FirebaseManager or add a public accessor if needed
-    // For now, assuming db is public
+  
     FirebaseManager.shared.db.collection("reviews")
             .whereField("userId", isEqualTo: userId)
             .getDocuments { snapshot, error in

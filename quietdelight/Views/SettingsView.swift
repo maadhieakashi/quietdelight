@@ -221,7 +221,7 @@ struct SettingsView: View {
                 loadUserProfile()
             }
         }
-    // ...existing code...
+    
     }
 
     private func loadUserProfile() {
