@@ -18,21 +18,19 @@ struct quietdelightApp: App {
     
     var body: some Scene {
         WindowGroup {
-            Group {
-                if authManager.isLoading {
-                    
-                    SplashView()
-                } else if authManager.isAuthenticated {
-                    //auth correct
-                    TabBarView()
-                } else {
-                    
-                    SigninView()
+                Group {
+                    if authManager.isLoading {
+                        SplashView()
+                    } else if authManager.isAuthenticated {
+                        TabBarView()
+                    } else {
+                        SigninView()
+                    }
                 }
-            }
-            .onAppear {
-                print("App appeared - Auth loading: \(authManager.isLoading), Authenticated: \(authManager.isAuthenticated)")
-            }
+                .preferredColorScheme(.light)
+                .onAppear {
+                    print("App appeared - Auth loading: \(authManager.isLoading), Authenticated: \(authManager.isAuthenticated)")
+                }
         }
     }
 }

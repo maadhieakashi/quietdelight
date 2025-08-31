@@ -22,10 +22,10 @@ struct ChangePasswordView: View {
     
     var body: some View {
         ZStack {
-            Color(hex: "F5F5F5").ignoresSafeArea()
+            Color(hex: "FFFFFF").ignoresSafeArea()
             
-            VStack(spacing: 24) {
-                // Current Password
+            VStack(spacing: 35) {
+                // Current Pwd
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Current Password")
                         .font(.system(size: 16, weight: .medium))
@@ -43,7 +43,7 @@ struct ChangePasswordView: View {
                         )
                 }
                 
-                // New Password
+                // New Pwd
                 VStack(alignment: .leading, spacing: 8) {
                     Text("New Password")
                         .font(.system(size: 16, weight: .medium))
@@ -61,7 +61,7 @@ struct ChangePasswordView: View {
                         )
                 }
                 
-                // Confirm Password
+                // Confirm Pwd
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Confirm Password")
                         .font(.system(size: 16, weight: .medium))
@@ -79,7 +79,7 @@ struct ChangePasswordView: View {
                         )
                 }
                 
-                // Password requires
+                // Password reqiure
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Password Requirements:")
                         .font(.system(size: 14, weight: .medium))
@@ -96,7 +96,7 @@ struct ChangePasswordView: View {
                 
                 Spacer()
                 
-                // Update pwd
+                // Update Password Button
                 Button(action: updatePassword) {
                     HStack {
                         if isLoading {
@@ -116,27 +116,29 @@ struct ChangePasswordView: View {
                     .opacity(isValidForm ? 1.0 : 0.6)
                 }
                 .disabled(!isValidForm || isLoading)
-                .padding(.bottom, 40)
+                .padding(.bottom, 20)
             }
             .padding(.horizontal, 20)
+            .padding(.top,25)
         }
         .navigationTitle("Change Password")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationBarItems(
-            leading: Button(action: {
-                presentationMode.wrappedValue.dismiss()
-            }) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.black)
-            },
-            trailing: Button("Save") {
-                updatePassword()
-            }
-            .foregroundColor(Color(hex: "5A3529"))
-            .fontWeight(.semibold)
-            .disabled(!isValidForm || isLoading)
-        )
+            .navigationBarBackButtonHidden(true)
+            .navigationBarItems(
+                leading: Button(action: {
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.black)
+                },
+                trailing: Button("Save") {
+                    updatePassword()
+                }
+                .foregroundColor(Color(hex: "5A3529"))
+                .fontWeight(.semibold)
+                .disabled(!isValidForm || isLoading)
+            )
         .alert(alertTitle, isPresented: $showAlert) {
             Button("OK") {
                 if alertTitle == "Success" {
@@ -170,7 +172,7 @@ struct ChangePasswordView: View {
         
         isLoading = true
         
-        // Re-authenticate user first
+        // Re-authenticate
         authManager.reauthenticateUser(email: email, password: currentPassword) { result in
             DispatchQueue.main.async {
                 switch result {
@@ -210,11 +212,11 @@ struct RequirementRow: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: isValid ? "checkmark.circle.fill" : "circle")
-                .font(.system(size: 12))
+                .font(.system(size: 15))
                 .foregroundColor(isValid ? .green : .gray)
             
             Text("• \(text)")
-                .font(.system(size: 12))
+                .font(.system(size: 15))
                 .foregroundColor(isValid ? .green : .gray)
             
             Spacer()

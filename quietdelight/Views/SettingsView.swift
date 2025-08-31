@@ -17,163 +17,208 @@ struct SettingsView: View {
     @State private var showLogoutAlert = false
 
     var body: some View {
-        ZStack {
-            Color(hex: "FFFFFF").ignoresSafeArea()
+        NavigationView {
+            ZStack {
+                Color(hex: "FFFFFF").ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: 0) {
-                    // Header
-                    VStack(spacing: 12) {
-                        ZStack {
-                            if let image = profileImage {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 60, height: 60)
-                                    .clipShape(Circle())
-                            } else {
-                                Image(systemName: "person.crop.circle.fill")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 60, height: 60)
-                                    .foregroundColor(Color(hex: "5A3529"))
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // Header
+                        VStack(spacing: 12) {
+                            ZStack {
+                                if let image = profileImage {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 60, height: 60)
+                                        .clipShape(Circle())
+                                } else {
+                                    Image(systemName: "person.crop.circle.fill")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 60, height: 60)
+                                        .foregroundColor(Color(hex: "5A3529"))
+                                }
+                            }
+                            .padding(.top, 20)
+
+                            VStack(spacing: 4) {
+                                Text(username)
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundColor(.black)
+
+                                Text(email)
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.gray)
                             }
                         }
-                        .padding(.top, 20)
+                        .frame(maxWidth: .infinity)
+                        .padding(.bottom, 30)
 
-                        VStack(spacing: 4) {
-                            Text(username)
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.black)
-
-                            Text(email)
-                                .font(.system(size: 14))
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.bottom, 30)
-
-                    // Generals Section
-                    VStack(alignment: .leading, spacing: 0) {
-                        HStack {
-                            Text("Generals")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.gray)
-                            Spacer()
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 12)
+                        // Generals Section
+                        VStack(alignment: .leading, spacing: 0) {
+                            HStack {
+                                Text("Generals")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.gray)
+                                Spacer()
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 12)
                         
-                        VStack(spacing: 0) {
-                                                        
-                            NavigationLink(destination: EditProfileView()) {
+                            VStack(spacing: 0) {
+                                                    
+                                NavigationLink(destination: EditProfileView()) {
+                                    SettingsMenuRow(
+                                        icon: "person.circle",
+                                        title: "Edit Profile",
+                                        subtitle: "Edit your profile and password"
+                                    )
+                                }
+                            
+                                Divider()
+                                    .padding(.leading, 52)
+                            
+                                // Favourites Row
+                                NavigationLink(destination: FavoriteView()) {
+                                    SettingsMenuRow(
+                                        icon: "heart",
+                                        title: "Favourites",
+                                        subtitle: "Save your favorite cafes"
+                                    )
+                                }
+                            
+                                Divider()
+                                    .padding(.leading, 52)
+                            
+                                // Reviews Row
                                 SettingsMenuRow(
-                                    icon: "person.circle",
-                                    title: "Edit Profile",
-                                    subtitle: "Edit your profile and password"
+                                    icon: "star.square",
+                                    title: "Reviews",
+                                    subtitle: "Share your cafe experiences"
                                 )
                             }
-                            
-                            Divider()
-                                .padding(.leading, 52)
-                            
-                            // Favourites Row
-                            NavigationLink(destination: FavoriteView()) {
-                                SettingsMenuRow(
-                                    icon: "heart",
-                                    title: "Favourites",
-                                    subtitle: "Save your favorite cafes"
-                                )
-                            }
-                            
-                            Divider()
-                                .padding(.leading, 52)
-                            
-                            // Reviews Row
-                            SettingsMenuRow(
-                                icon: "star.square",
-                                title: "Reviews",
-                                subtitle: "Share your cafe experiences"
-                            )
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .padding(.horizontal, 16)
                         }
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .padding(.horizontal, 16)
-                    }
-                    .padding(.bottom, 30)
+                        .padding(.bottom, 30)
                     
-                    // Preferences Section
-                    VStack(alignment: .leading, spacing: 0) {
-                        HStack {
-                            Text("Preferences")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.gray)
-                            Spacer()
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 12)
+                        // Preferences Section
+                        VStack(alignment: .leading, spacing: 0) {
+                            HStack {
+                                Text("Preferences")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.gray)
+                                Spacer()
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 12)
                         
-                        VStack(spacing: 0) {
-                            // Notifications Row
-                            SettingsToggleRow(
-                                icon: "bell",
-                                title: "Notifications",
-                                subtitle: "Get notified about nearby cafes"
-                            )
-                            
-                            Divider()
-                                .padding(.leading, 52)
-                            
-                            // Privacy & Policy Row
-                            SettingsMenuRow(
-                                icon: "shield",
-                                title: "Privacy & Policy",
-                                subtitle: ""
-                            )
-                            
-                            Divider()
-                                .padding(.leading, 52)
-                            
-                            // License Row
-                            SettingsMenuRow(
-                                icon: "doc.text",
-                                title: "License",
-                                subtitle: ""
-                            )
-                            
-                            Divider()
-                                .padding(.leading, 52)
-                            
-                            // Term of service Row
-                            SettingsMenuRow(
-                                icon: "doc.plaintext",
-                                title: "Term of service",
-                                subtitle: ""
-                            )
-                            
-                            Divider()
-                                .padding(.leading, 52)
-                            
-                            // Log Out Row
-                            Button(action: {
-                                showLogoutAlert = true
-                            }) {
-                                SettingsMenuRow(
-                                    icon: "rectangle.portrait.and.arrow.right",
-                                    title: "Log Out",
-                                    subtitle: "",
-                                    isDestructive: true
+                            VStack(spacing: 0) {
+                                // Notifications Row
+                                SettingsToggleRow(
+                                    icon: "bell",
+                                    title: "Notifications",
+                                    subtitle: "Get notified about nearby cafes"
                                 )
+                            
+                                Divider()
+                                    .padding(.leading, 52)
+                            
+                                // Privacy & Policy Row
+                                SettingsMenuRow(
+                                    icon: "shield",
+                                    title: "Privacy & Policy",
+                                    subtitle: ""
+                                )
+                            
+                                Divider()
+                                    .padding(.leading, 52)
+                            
+                                // License Row
+                                SettingsMenuRow(
+                                    icon: "doc.text",
+                                    title: "License",
+                                    subtitle: ""
+                                )
+                            
+                                Divider()
+                                    .padding(.leading, 52)
+                            
+                                // Term of service Row
+                                SettingsMenuRow(
+                                    icon: "doc.plaintext",
+                                    title: "Term of service",
+                                    subtitle: ""
+                                )
+                            
+                                Divider()
+                                    .padding(.leading, 52)
+                            
+                                // Log Out Row
+                                Button(action: {
+                                    showLogoutAlert = true
+                                }) {
+                                    SettingsMenuRow(
+                                        icon: "rectangle.portrait.and.arrow.right",
+                                        title: "Log Out",
+                                        subtitle: "",
+                                        isDestructive: true
+                                    )
+                                }
                             }
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .padding(.horizontal, 16)
                         }
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .padding(.horizontal, 16)
-                    }
                     
-                    Spacer(minLength: 100)
+                        Spacer(minLength: 100)
+                    }
                 }
+            }
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
+            .alert("Log Out", isPresented: $showLogoutAlert) {
+                Button("Cancel", role: .cancel) { }
+                Button("Log Out", role: .destructive) {
+                    performLogout()
+                }
+            } message: {
+                Text("Are you sure you want to log out?")
+            }
+            .onAppear {
+                // Config
+                let navBarAppearance = UINavigationBarAppearance()
+                navBarAppearance.configureWithOpaqueBackground()
+                navBarAppearance.backgroundColor = UIColor(Color(hex: "F5F5F5"))
+                navBarAppearance.titleTextAttributes = [
+                    .foregroundColor: UIColor.black,
+                    .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
+                ]
+                navBarAppearance.shadowColor = UIColor.clear
+            
+            
+                navBarAppearance.backButtonAppearance.normal.titleTextAttributes = [
+                    .foregroundColor: UIColor(Color(hex: "5A3529"))
+                ]
+                navBarAppearance.setBackIndicatorImage(
+                    UIImage(systemName: "chevron.left")?.withTintColor(UIColor(Color(hex: "5A3529")), renderingMode: .alwaysOriginal),
+                    transitionMaskImage: UIImage(systemName: "chevron.left")?.withTintColor(UIColor(Color(hex: "5A3529")), renderingMode: .alwaysOriginal)
+                )
+            
+                UINavigationBar.appearance().standardAppearance = navBarAppearance
+                UINavigationBar.appearance().scrollEdgeAppearance = navBarAppearance
+                UINavigationBar.appearance().compactAppearance = navBarAppearance
+            
+            
+                UINavigationBar.appearance().tintColor = UIColor(Color(hex: "5A3529"))
+            
+                loadUserProfile()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                loadUserProfile()
             }
         }
         .navigationTitle("Settings")
@@ -188,7 +233,7 @@ struct SettingsView: View {
             Text("Are you sure you want to log out?")
         }
         .onAppear {
-            // Configure navigation bar appearance
+            // Config
             let navBarAppearance = UINavigationBarAppearance()
             navBarAppearance.configureWithOpaqueBackground()
             navBarAppearance.backgroundColor = UIColor(Color(hex: "F5F5F5"))
@@ -198,7 +243,7 @@ struct SettingsView: View {
             ]
             navBarAppearance.shadowColor = UIColor.clear
             
-            // Configure back button appearance
+            
             navBarAppearance.backButtonAppearance.normal.titleTextAttributes = [
                 .foregroundColor: UIColor(Color(hex: "5A3529"))
             ]
@@ -211,7 +256,7 @@ struct SettingsView: View {
             UINavigationBar.appearance().scrollEdgeAppearance = navBarAppearance
             UINavigationBar.appearance().compactAppearance = navBarAppearance
             
-            // Ensure tint color for navigation items
+            
             UINavigationBar.appearance().tintColor = UIColor(Color(hex: "5A3529"))
             
             loadUserProfile()
@@ -227,7 +272,7 @@ struct SettingsView: View {
             username = user.displayName ?? "User"
             email = user.email ?? ""
             
-            // Try to load from Firestore first (for updated data)
+    
             authManager.getUserData { userData in
                 DispatchQueue.main.async {
                     if let firestoreUsername = userData?["username"] as? String {
@@ -237,7 +282,7 @@ struct SettingsView: View {
                        let url = URL(string: profilePictureURL) {
                         self.fetchProfileImage(from: url)
                     } else if let url = user.photoURL {
-                        // Fallback to Firebase Auth photoURL
+                        
                         self.fetchProfileImage(from: url)
                     } else {
                         self.profileImage = nil
@@ -289,7 +334,7 @@ struct SettingsView: View {
     }
 }
 
-// Settings Menu Row Component
+// Settingsmenu
 struct SettingsMenuRow: View {
     let icon: String
     let title: String
@@ -329,7 +374,7 @@ struct SettingsMenuRow: View {
     }
 }
 
-// Settings Toggle Row Component
+// Settingstoggle
 struct SettingsToggleRow: View {
     let icon: String
     let title: String
@@ -369,4 +414,3 @@ struct SettingsToggleRow: View {
 #Preview {
     SettingsView()
 }
-
