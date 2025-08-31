@@ -221,49 +221,7 @@ struct SettingsView: View {
                 loadUserProfile()
             }
         }
-        .navigationTitle("Settings")
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .alert("Log Out", isPresented: $showLogoutAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Log Out", role: .destructive) {
-                performLogout()
-            }
-        } message: {
-            Text("Are you sure you want to log out?")
-        }
-        .onAppear {
-            // Config
-            let navBarAppearance = UINavigationBarAppearance()
-            navBarAppearance.configureWithOpaqueBackground()
-            navBarAppearance.backgroundColor = UIColor(Color(hex: "F5F5F5"))
-            navBarAppearance.titleTextAttributes = [
-                .foregroundColor: UIColor.black,
-                .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
-            ]
-            navBarAppearance.shadowColor = UIColor.clear
-            
-            
-            navBarAppearance.backButtonAppearance.normal.titleTextAttributes = [
-                .foregroundColor: UIColor(Color(hex: "5A3529"))
-            ]
-            navBarAppearance.setBackIndicatorImage(
-                UIImage(systemName: "chevron.left")?.withTintColor(UIColor(Color(hex: "5A3529")), renderingMode: .alwaysOriginal),
-                transitionMaskImage: UIImage(systemName: "chevron.left")?.withTintColor(UIColor(Color(hex: "5A3529")), renderingMode: .alwaysOriginal)
-            )
-            
-            UINavigationBar.appearance().standardAppearance = navBarAppearance
-            UINavigationBar.appearance().scrollEdgeAppearance = navBarAppearance
-            UINavigationBar.appearance().compactAppearance = navBarAppearance
-            
-            
-            UINavigationBar.appearance().tintColor = UIColor(Color(hex: "5A3529"))
-            
-            loadUserProfile()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            loadUserProfile()
-        }
+    // ...existing code...
     }
 
     private func loadUserProfile() {

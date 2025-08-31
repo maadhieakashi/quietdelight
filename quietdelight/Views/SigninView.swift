@@ -21,6 +21,11 @@ struct SigninView: View {
     @State private var forgotPassword = false
     @State private var isBiometricLoading = false
     
+    // Debug helper to track navigation state
+    private func logNavigationState(_ context: String) {
+        print("[\(context)] navigateToHome: \(navigateToHome), navigateToOnboarding: \(navigateToOnboarding), isAuthenticated: \(authManager.isAuthenticated)")
+    }
+    
     var body: some View {
         NavigationStack {
             Group {
@@ -46,13 +51,13 @@ struct SigninView: View {
             } message: {
                 Text(alertMessage)
             }
-            .onChange(of: authManager.isAuthenticated) { isAuthenticated in
-                print("Auth state changed: \(isAuthenticated)")
-                if isAuthenticated {
-                    // Only call this if we haven't already triggered navigation manually
-                    if !navigateToHome && !navigateToOnboarding {
-                        self.checkUserOnboardingStatus()
-                    }
+            .onChange(of: authManager.isAuthenticated) { oldValue, newValue in
+                print("Auth state changed: \(oldValue) -> \(newValue)")
+                logNavigationState("onChange")
+                // Handle authentication state changes only if user is not currently signing in
+                // This prevents conflicts with manual navigation triggers
+                if newValue && !authManager.isLoading {
+                    self.checkUserOnboardingStatus()
                 }
             }
         }
@@ -291,12 +296,15 @@ struct SigninView: View {
                 switch result {
                 case .success(let message):
                     print("Sign in successful: \(message)")
-                    // Small delay to ensure auth state is updated
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        self.checkUserOnboardingStatus()
-                    }
+                    self.logNavigationState("handleSignIn success")
+                    // Clear any previous navigation state
+                    self.navigateToHome = false
+                    self.navigateToOnboarding = false
+                    // Check onboarding status after successful authentication
+                    self.checkUserOnboardingStatus()
                 case .failure(let errorMessage):
-                    showAlert(title: "Sign In Failed", message: errorMessage)
+                    print("Sign in failed: \(errorMessage)")
+                    self.showAlert(title: "Sign In Failed", message: errorMessage)
                 }
             }
         }
@@ -327,7 +335,11 @@ struct SigninView: View {
                     let successFeedback = UINotificationFeedbackGenerator()
                     successFeedback.notificationOccurred(.success)
                     
-                    // Trigger navigation after successful biometric auth
+                    print("Biometric authentication successful")
+                    // Clear any previous navigation state
+                    self.navigateToHome = false
+                    self.navigateToOnboarding = false
+                    // Check onboarding status after successful biometric auth
                     self.checkUserOnboardingStatus()
                 case .failure(let error):
                     // Error haptic feedback
@@ -363,15 +375,13 @@ struct SigninView: View {
     
     private func checkUserOnboardingStatus() {
         print("Checking user onboarding status...")
+        logNavigationState("checkUserOnboardingStatus start")
         
-        // Check if user has completed onboarding before
-        let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
-        print("Has completed onboarding: \(hasCompletedOnboarding)")
-        
-        // Also check if user exists in Firestore (for users who signed up before)
-        guard let user = authManager.currentUser else {
-            print("No current user found, navigating to onboarding")
+        // Ensure we're on the main thread and user is authenticated
+        guard authManager.isAuthenticated, let user = authManager.currentUser else {
+            print("User not authenticated or current user is nil")
             DispatchQueue.main.async {
+                self.logNavigationState("checkUserOnboardingStatus - not authenticated")
                 self.navigateToHome = false
                 self.navigateToOnboarding = true
             }
@@ -380,18 +390,24 @@ struct SigninView: View {
         
         print("Current user: \(user.email ?? "unknown")")
         
-        // For existing users, check if they have profile data (indication of previous onboarding)
+        // Check onboading
+        let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+        print("Has completed onboarding: \(hasCompletedOnboarding)")
+        
+        // For existing users
         authManager.getUserData { userData in
             DispatchQueue.main.async {
                 print("User data retrieved: \(userData != nil)")
                 if hasCompletedOnboarding || userData != nil {
                     // User has completed onboarding before or has profile data
                     print("Navigating to home")
+                    self.logNavigationState("checkUserOnboardingStatus - to home")
                     self.navigateToOnboarding = false
                     self.navigateToHome = true
                 } else {
                     // First time user - show onboarding
                     print("Navigating to onboarding")
+                    self.logNavigationState("checkUserOnboardingStatus - to onboarding")
                     self.navigateToHome = false
                     self.navigateToOnboarding = true
                 }
