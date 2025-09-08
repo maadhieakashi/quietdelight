@@ -1,10 +1,9 @@
 //
-//  firebaseAuth.swift
-//  quietdelightcafe
+//  FirebaseAuthManager.swift
+//  cafedelight
 //
-//  Created by SAHimeshi 002 on 2025-08-20.
+//  Created by SAHimeshi 002 on 2025-08-15.
 //
-
 
 import Foundation
 import FirebaseAuth
@@ -77,6 +76,9 @@ class FirebaseAuthManager: ObservableObject {
     
     // Store the auth state listener handle
     private var authStateHandle: AuthStateDidChangeListenerHandle?
+    // In-memory credentials for simulator/testing (not secure for production)
+    private var cachedEmail: String?
+    private var cachedPassword: String?
     
     // Initialization
     private init() {
@@ -117,7 +119,7 @@ class FirebaseAuthManager: ObservableObject {
         }
     }
     
-    //Sign Up Methods
+    // MARK: - Sign Up Methods
     
     func signUp(
         username: String,
@@ -205,27 +207,25 @@ class FirebaseAuthManager: ObservableObject {
         Auth.auth().signIn(withEmail: email, password: password) { [weak self] authResult, error in
             DispatchQueue.main.async {
                 self?.isLoading = false
-                
                 if let error = error {
                     print("Sign in error: \(error.localizedDescription)")
                     completion(.failure(self?.handleAuthError(error) ?? "Sign in failed"))
                     return
                 }
-                
                 guard let user = authResult?.user else {
                     print("No user returned from sign in")
                     completion(.failure("Failed to sign in. Please try again."))
                     return
                 }
-                
                 print("Sign in successful for user: \(user.email ?? "unknown")")
-                
                 // Update authentication state
                 self?.currentUser = user
                 self?.isAuthenticated = true
-                
                 // Save credentials for biometric auth and update last login
                 self?.saveCredentialsToKeychain(email: email, password: password)
+                // Also store in memory for simulator/testing
+                self?.cachedEmail = email
+                self?.cachedPassword = password
                 self?.updateLastLoginTime()
                 completion(.success("Signed in successfully!"))
             }
@@ -269,8 +269,7 @@ class FirebaseAuthManager: ObservableObject {
             try Auth.auth().signOut()
             self.currentUser = nil
             self.isAuthenticated = false
-            // Optionally remove saved credentials
-            removeCredentialsFromKeychain()
+            // Do NOT remove credentials from Keychain, so Face ID can be used after logout
             completion(.success("Signed out successfully"))
         } catch {
             completion(.failure("Failed to sign out: \(error.localizedDescription)"))
@@ -390,12 +389,15 @@ class FirebaseAuthManager: ObservableObject {
             DispatchQueue.main.async {
                 if success {
                     print("Biometric authentication successful")
-                    // Try to retrieve saved credentials and sign in
+                    // Try to retrieve saved credentials from keychain or in-memory (simulator)
                     if let credentials = self?.getCredentialsFromKeychain() {
                         print("Retrieved credentials from keychain for: \(credentials.email)")
                         self?.signInWithEmailPassword(email: credentials.email, password: credentials.password, completion: completion)
+                    } else if let email = self?.cachedEmail, let password = self?.cachedPassword {
+                        print("Using in-memory credentials for: \(email)")
+                        self?.signInWithEmailPassword(email: email, password: password, completion: completion)
                     } else {
-                        print("No saved credentials found in keychain")
+                        print("No saved credentials found in keychain or memory")
                         completion(.failure(AuthError.noSavedCredentials))
                     }
                 } else {
@@ -880,3 +882,4 @@ protocol AuthenticationStateDelegate: AnyObject {
     func authenticationStateDidChange(isAuthenticated: Bool)
     func authenticationDidFail(with error: Error)
 }
+
