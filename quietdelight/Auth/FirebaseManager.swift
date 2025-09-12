@@ -1,6 +1,6 @@
 //
 //  FirebaseManager.swift
-//  quietdelight
+//  cafedelight
 //
 //  Created by SAHimeshi 002 on 2025-08-30.
 //
@@ -15,10 +15,10 @@ class FirebaseManager: ObservableObject {
    let db = Firestore.firestore()
     
     init() {
-     
+    
     }
     
-    // Places
+    //Places
     func fetchColombo7Places(completion: @escaping ([PlaceData]) -> Void) {
         db.collection("places")
             .whereField("area", isEqualTo: "Colombo 7")
@@ -32,6 +32,9 @@ class FirebaseManager: ObservableObject {
                 
                 let places = snapshot?.documents.compactMap { doc -> PlaceData? in
                     let data = doc.data()
+                    let venueTypeString = data["venueType"] as? String
+                    let venueType = VenueType(rawValue: venueTypeString ?? "") ?? .cafe
+                    
                     return PlaceData(
                         id: doc.documentID,
                         name: data["name"] as? String ?? "",
@@ -40,10 +43,12 @@ class FirebaseManager: ObservableObject {
                         longitude: data["longitude"] as? Double ?? 0.0,
                         rating: data["rating"] as? Double ?? 0.0,
                         imageURL: data["imageURL"] as? String ?? "",
+                        description: data["description"] as? String ?? "",
                         isWorkFriendly: data["isWorkFriendly"] as? Bool ?? false,
                         hasWiFi: data["hasWiFi"] as? Bool ?? false,
                         hasPowerOutlets: data["hasPowerOutlets"] as? Bool ?? false,
-                        isQuietZone: data["isQuietZone"] as? Bool ?? false
+                        isQuietZone: data["isQuietZone"] as? Bool ?? false,
+                        venueType: venueType
                     )
                 } ?? []
                 
@@ -51,7 +56,122 @@ class FirebaseManager: ObservableObject {
             }
     }
     
-    //Reviews
+    func savePlaceToFirebase(_ place: PlaceData, completion: @escaping (Bool) -> Void) {
+       
+        checkIfPlaceExists(place) { exists, existingPlaceId in
+            if exists {
+                print("Place '\(place.name)' already exists in Firebase with ID: \(existingPlaceId ?? "unknown")")
+                completion(true)
+                return
+            }
+            
+           
+            let placeRef = self.db.collection("places").document(place.id)
+            
+            let placeData: [String: Any] = [
+                "name": place.name,
+                "address": place.address,
+                "latitude": place.latitude,
+                "longitude": place.longitude,
+                "rating": place.rating,
+                "imageURL": place.imageURL,
+                "description": place.description,
+                "isWorkFriendly": place.isWorkFriendly,
+                "hasWiFi": place.hasWiFi,
+                "hasPowerOutlets": place.hasPowerOutlets,
+                "isQuietZone": place.isQuietZone,
+                "venueType": place.venueType.rawValue,
+                "area": "Colombo 7",
+                "createdAt": Timestamp(date: Date()),
+                "source": "mapkit"
+            ]
+            
+            placeRef.setData(placeData, merge: true) { error in
+                if let error = error {
+                    print("Error saving place to Firebase: \(error)")
+                    completion(false)
+                } else {
+                    print("Successfully saved new place: \(place.name)")
+                    completion(true)
+                }
+            }
+        }
+    }
+    
+    private func checkIfPlaceExists(_ place: PlaceData, completion: @escaping (Bool, String?) -> Void) {
+
+        db.collection("places")
+            .whereField("latitude", isGreaterThan: place.latitude - 0.001) // ~100m radius
+            .whereField("latitude", isLessThan: place.latitude + 0.001)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    print("Error checking for duplicate places: \(error)")
+                    completion(false, nil)
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    completion(false, nil)
+                    return
+                }
+                
+               
+                for doc in documents {
+                    let data = doc.data()
+                    let existingName = data["name"] as? String ?? ""
+                    let existingLat = data["latitude"] as? Double ?? 0.0
+                    let existingLng = data["longitude"] as? Double ?? 0.0
+                    
+                    
+                    if self.isSamePlace(place.name, existingName) &&
+                       self.isLocationSimilar(place.latitude, place.longitude, existingLat, existingLng) {
+                        completion(true, doc.documentID)
+                        return
+                    }
+                }
+                
+                completion(false, nil)
+            }
+    }
+    
+    private func isSamePlace(_ name1: String, _ name2: String) -> Bool {
+        let cleanName1 = name1.lowercased().trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters))
+        let cleanName2 = name2.lowercased().trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters))
+        
+        // Check for exact match
+        if cleanName1 == cleanName2 {
+            return true
+        }
+        
+        // Check for similarity (one name contains the other)
+        if cleanName1.contains(cleanName2) || cleanName2.contains(cleanName1) {
+            return true
+        }
+        
+        // Check for similar words (at least 70% similarity)
+        let similarity = calculateStringSimilarity(cleanName1, cleanName2)
+        return similarity > 0.7
+    }
+    
+    private func isLocationSimilar(_ lat1: Double, _ lng1: Double, _ lat2: Double, _ lng2: Double) -> Bool {
+        // Check if locations are within ~50 meters of each other
+        let latDiff = abs(lat1 - lat2)
+        let lngDiff = abs(lng1 - lng2)
+        return latDiff < 0.0005 && lngDiff < 0.0005
+    }
+    
+    private func calculateStringSimilarity(_ str1: String, _ str2: String) -> Double {
+        let set1 = Set(str1.components(separatedBy: CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters)))
+        let set2 = Set(str2.components(separatedBy: CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters)))
+        
+        let intersection = set1.intersection(set2)
+        let union = set1.union(set2)
+        
+        guard !union.isEmpty else { return 0.0 }
+        return Double(intersection.count) / Double(union.count)
+    }
+    
+    // Reviews
     func addReview(_ review: ReviewData, completion: @escaping (Bool) -> Void) {
         let reviewRef = db.collection("reviews").document()
         
@@ -75,7 +195,7 @@ class FirebaseManager: ObservableObject {
                 completion(false)
             } else {
                 completion(true)
-                // Update place rating
+                
                 self.updatePlaceRating(placeId: review.placeId)
             }
         }
@@ -116,7 +236,20 @@ class FirebaseManager: ObservableObject {
             }
     }
     
-    // Favorites
+    func deleteReview(reviewId: String, placeId: String, completion: @escaping (Bool) -> Void) {
+        db.collection("reviews").document(reviewId).delete { error in
+            if let error = error {
+                print("Error deleting review: \(error)")
+                completion(false)
+            } else {
+                completion(true)
+              
+                self.updatePlaceRating(placeId: placeId)
+            }
+        }
+    }
+    
+    //Favorites
     func addFavorite(placeId: String, userId: String) {
         let favoriteData: [String: Any] = [
             "placeId": placeId,

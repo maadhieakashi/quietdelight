@@ -1,14 +1,13 @@
-//
 //  OnboardingView.swift
-//  quietdelightcafe
+//  cafedelight
 //
 //  Created by SAHimeshi 002 on 2025-08-20.
 //
 
-
 import SwiftUI
 
 struct OnboardingView: View {
+    @StateObject private var authManager = FirebaseAuthManager.shared
     @State private var currentPage = 0
     @State private var showImagePicker = false
     @State private var profileImage: UIImage?
@@ -41,8 +40,7 @@ struct OnboardingView: View {
                     //feature discover
                     FeatureDiscoveryScreen(
                         onGetStarted: {
-                            print("Onboarding completed")
-                            navigateToHome = true
+                            completeOnboarding()
                         }
                     )
                     .tag(2)
@@ -63,7 +61,7 @@ struct OnboardingView: View {
                         Spacer()
                         Button("Skip") {
                             print("Onboarding skipped")
-                            navigateToHome = true
+                            completeOnboarding()
                         }
                         .foregroundColor(.black)
                         .padding(.trailing, 20)
@@ -75,7 +73,7 @@ struct OnboardingView: View {
             .navigationBarHidden(true)
             // Modern navigation using navigationDestination
             .navigationDestination(isPresented: $navigateToHome) {
-                HomeView()
+                TabBarView()
                     .navigationBarBackButtonHidden(true)
             }
         }
@@ -89,18 +87,18 @@ struct OnboardingView: View {
         ZStack {
             // Top decorative circles
             Circle()
-                .fill(Color.brown.opacity(0.5))
+                .fill(Color(hex: "5A3529").opacity(0.5))
                 .frame(width: 120, height: 120)
                 .offset(x: 150, y: -350)
             
             Circle()
-                .fill(Color.brown.opacity(0.3))
+                .fill(Color(hex: "5A3529").opacity(0.3))
                 .frame(width: 80, height: 80)
                 .offset(x: 180, y: -250)
             
             // Bottom dec
             Circle()
-                .fill(Color.brown.opacity(0.4))
+                .fill(Color(hex: "5A3529").opacity(0.4))
                 .frame(width: 100, height: 100)
                 .offset(x: -150, y: 350)
         }
@@ -115,6 +113,31 @@ struct OnboardingView: View {
                     .scaleEffect(index == currentPage ? 1.2 : 1.0)
                     .animation(.easeInOut, value: currentPage)
             }
+        }
+    }
+    
+    private func completeOnboarding() {
+        // Mark onboarding as complete first
+        UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+        UserDefaults.standard.synchronize()
+        
+        // Save profile image if selected
+        if let image = profileImage {
+            authManager.updateProfileWithImage(image) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success:
+                        print("Profile image saved successfully")
+                    case .failure(let error):
+                        print("Failed to save profile image: \(error.localizedDescription)")
+                    }
+                    // Navigate to home
+                    self.navigateToHome = true
+                }
+            }
+        } else {
+            // No image to save, just navigate to home
+            navigateToHome = true
         }
     }
 }
@@ -170,14 +193,30 @@ struct ProfilePictureScreen: View {
             
             Spacer()
             
-            Button(action: { showImagePicker = true }) {
-                Text("Upload your Profile Picture")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color.black)
-                    .cornerRadius(8)
+            VStack(spacing: 12) {
+                Button(action: { showImagePicker = true }) {
+                    Text("Upload your Profile Picture")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.black)
+                        .cornerRadius(8)
+                }
+                
+                Button(action: onNext) {
+                    Text("Continue")
+                        .font(.headline)
+                        .foregroundColor(Color(hex: "5A3529"))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.white)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(hex: "5A3529"), lineWidth: 2)
+                        )
+                        .cornerRadius(8)
+                }
             }
             .padding(.horizontal, 40)
             .padding(.bottom, 20)
@@ -211,7 +250,8 @@ struct LocationAccessScreen: View {
                         ZStack {
                             Image(systemName: "map.fill")
                                 .font(.system(size: 40))
-                                .foregroundColor(Color(hex: "382E2C").opacity(0.3))
+                                .foregroundColor(Color(hex: "382E2C"))
+                                .opacity(0.3)
                             
                             Image(systemName: "location.fill")
                                 .font(.system(size: 35))

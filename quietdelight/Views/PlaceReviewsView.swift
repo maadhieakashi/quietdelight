@@ -1,15 +1,17 @@
 //
-//  Untitled.swift
-//  quietdelight
+//  PlaceReviewsView.swift
+//  cafedelight
 //
 //  Created by SAHimeshi 002 on 2025-08-30.
 //
 
 import SwiftUI
+import FirebaseAuth
 
 struct PlaceReviewsView: View {
     let place: PlaceData
     @State var reviews: [ReviewData]
+    @StateObject private var firebaseManager = FirebaseManager.shared
     
     @Environment(\.presentationMode) var presentationMode
     @State private var selectedFilter = "All"
@@ -207,7 +209,9 @@ struct PlaceReviewsView: View {
                         } else {
                             LazyVStack(alignment: .leading, spacing: 20) {
                                 ForEach(filteredReviews, id: \ .id) { (review: ReviewData) in
-                                    DetailedReviewView(review: review)
+                                    DetailedReviewView(review: review) { reviewToDelete in
+                                        deleteReview(reviewToDelete)
+                                    }
                                 }
                             }
                         }
@@ -229,11 +233,33 @@ struct PlaceReviewsView: View {
             }
         }
     }
+    
+    private func deleteReview(_ review: ReviewData) {
+        guard let currentUserId = Auth.auth().currentUser?.uid,
+              review.userId == currentUserId else {
+            return // Only allow users to delete their own reviews
+        }
+        
+        firebaseManager.deleteReview(reviewId: review.id, placeId: place.id) { success in
+            DispatchQueue.main.async {
+                if success {
+                    self.reviews.removeAll { $0.id == review.id }
+                }
+            }
+        }
+    }
 }
 
 struct DetailedReviewView: View {
     let review: ReviewData
+    let onDelete: (ReviewData) -> Void
     @State private var isExpanded = false
+    @State private var showDeleteAlert = false
+    
+    private var isCurrentUserReview: Bool {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return false }
+        return review.userId == currentUserId
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
@@ -268,11 +294,25 @@ struct DetailedReviewView: View {
                 
                 Spacer()
                 
-                Text(timeAgoString(from: review.createdAt))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                VStack(alignment: .trailing, spacing: 5) {
+                    Text(timeAgoString(from: review.createdAt))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    if isCurrentUserReview {
+                        Button(action: {
+                            showDeleteAlert = true
+                        }) {
+                            Image(systemName: "trash")
+                                .foregroundColor(.red)
+                                .font(.caption)
+                        }
+                    }
+                }
             }
-        
+    // Helper function for time ago string
+    // Move this function outside the ViewBuilder
+            
             // Review Text
             Text(review.comment)
                 .font(.body)
@@ -288,13 +328,13 @@ struct DetailedReviewView: View {
                 .foregroundColor(.brown)
             }
             
-            // Feature
+            // Feature Tags
             HStack {
                 if !review.powerOutletStatus.isEmpty {
                     ReviewFeatureTag(text: review.powerOutletStatus)
                 }
                 
-                
+                // Add work-related tags based on ratings
                 if review.wifiStabilityRating >= 4.0 {
                     ReviewFeatureTag(text: "Fast WiFi")
                 }
@@ -304,7 +344,7 @@ struct DetailedReviewView: View {
                 }
             }
             
-            
+            // Work Feature Ratings
             VStack(alignment: .leading, spacing: 8) {
                 Text("Work Feature Rating")
                     .font(.subheadline)
@@ -383,7 +423,16 @@ struct DetailedReviewView: View {
             Divider()
         }
         .padding(.vertical, 5)
-   
+        .alert("Delete Review", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                onDelete(review)
+            }
+        } message: {
+            Text("Are you sure you want to delete this review? This action cannot be undone.")
+        }
+    // No explicit return statement needed in SwiftUI ViewBuilder
+    }
 }
 
 struct ReviewFeatureTag: View {
@@ -400,10 +449,3 @@ struct ReviewFeatureTag: View {
     }
 }
 
-}
-
-func timeAgoString(from date: Date) -> String {
-    let formatter = RelativeDateTimeFormatter()
-    formatter.unitsStyle = .full
-    return formatter.string(for: date) ?? ""
-}

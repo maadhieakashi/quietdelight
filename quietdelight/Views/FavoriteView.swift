@@ -1,6 +1,6 @@
 //
 //  FavoriteView.swift
-//  quietdelightcafe
+//  cafedelight
 //
 //  Created by SAHimeshi 002 on 2025-08-26.
 //
@@ -11,7 +11,7 @@ import FirebaseAuth
 struct FavoriteView: View {
     @StateObject private var coreDataManager = CoreDataManager.shared
     @StateObject private var firebaseManager = FirebaseManager.shared
-    @State private var favoriteePlaces: [PlaceData] = []
+    @State private var favoriteePlaces: [(place: PlaceData, favoritedAt: Date)] = []
     @State private var searchText = ""
     @State private var selectedFilter = "All"
     @State private var selectedPlace: PlaceData?
@@ -19,22 +19,22 @@ struct FavoriteView: View {
     
     let filterOptions = ["All", "Nearby", "recent"]
     
-    var filteredPlaces: [PlaceData] {
+    var filteredPlaces: [(place: PlaceData, favoritedAt: Date)] {
         var places = favoriteePlaces
         
         if !searchText.isEmpty {
-            places = places.filter { place in
-                place.name.localizedCaseInsensitiveContains(searchText)
+            places = places.filter { item in
+                item.place.name.localizedCaseInsensitiveContains(searchText)
             }
         }
         
         switch selectedFilter {
         case "Nearby":
-           
+            // Sort by distance (implement location-based sorting)
             return places
         case "recent":
-         
-            return places
+            // Sort by recently added to favorites
+            return places.sorted { $0.favoritedAt > $1.favoritedAt }
         default:
             return places
         }
@@ -117,12 +117,12 @@ struct FavoriteView: View {
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 15) {
-                            ForEach(filteredPlaces, id: \.id) { place in
-                                FavoritePlaceCard(place: place) {
-                                    selectedPlace = place
+                            ForEach(filteredPlaces, id: \.place.id) { item in
+                                FavoritePlaceCard(place: item.place, favoritedAt: item.favoritedAt) {
+                                    selectedPlace = item.place
                                     showPlaceDetail = true
                                 } onRemoveFavorite: {
-                                    removeFavorite(place: place)
+                                    removeFavorite(place: item.place)
                                 }
                             }
                         }
@@ -156,24 +156,60 @@ struct FavoriteView: View {
         let favoritePlaces = coreDataManager.fetchFavorites(for: userId)
         
         // Fetch place details for each favorite
-        var places: [PlaceData] = []
+        var places: [(place: PlaceData, favoritedAt: Date)] = []
         for favorite in favoritePlaces {
-            // In a real app, you'd fetch full place data from Core Data or Firebase
-            // For now, creating placeholder data
-            let place = PlaceData(
-                id: favorite.placeId ?? "",
-                name: "Sample Cafe",
-                address: "Colombo 7",
-                latitude: 6.914244,
-                longitude: 79.861244,
-                rating: 4.1,
-                imageURL: "",
-                isWorkFriendly: true,
-                hasWiFi: true,
-                hasPowerOutlets: true,
-                isQuietZone: true
-            )
-            places.append(place)
+            guard let placeId = favorite.placeId else { continue }
+            let favoritedAt = favorite.createdAt ?? Date()
+            
+          
+            let coreDataPlaces = coreDataManager.fetchPlaces()
+            if let existingPlace = coreDataPlaces.first(where: { $0.id == placeId }) {
+                let place = PlaceData(
+                    id: existingPlace.id ?? "",
+                    name: existingPlace.name ?? "",
+                    address: existingPlace.address ?? "",
+                    latitude: existingPlace.latitude,
+                    longitude: existingPlace.longitude,
+                    rating: existingPlace.rating,
+                    imageURL: existingPlace.imageURL ?? "",
+                    description: existingPlace.placeDescription ?? "",
+                    isWorkFriendly: existingPlace.isWorkFriendly,
+                    hasWiFi: existingPlace.hasWiFi,
+                    hasPowerOutlets: existingPlace.hasPowerOutlets,
+                    isQuietZone: existingPlace.isQuietZone
+                )
+                places.append((place: place, favoritedAt: favoritedAt))
+            } else {
+               
+                firebaseManager.db.collection("places").document(placeId).getDocument { document, error in
+                    if let document = document, document.exists, let data = document.data() {
+                        let venueTypeString = data["venueType"] as? String
+                        let venueType = VenueType(rawValue: venueTypeString ?? "") ?? .cafe
+                        
+                        let place = PlaceData(
+                            id: document.documentID,
+                            name: data["name"] as? String ?? "",
+                            address: data["address"] as? String ?? "",
+                            latitude: data["latitude"] as? Double ?? 0.0,
+                            longitude: data["longitude"] as? Double ?? 0.0,
+                            rating: data["rating"] as? Double ?? 0.0,
+                            imageURL: data["imageURL"] as? String ?? "",
+                            description: data["description"] as? String ?? "",
+                            isWorkFriendly: data["isWorkFriendly"] as? Bool ?? false,
+                            hasWiFi: data["hasWiFi"] as? Bool ?? false,
+                            hasPowerOutlets: data["hasPowerOutlets"] as? Bool ?? false,
+                            isQuietZone: data["isQuietZone"] as? Bool ?? false,
+                            venueType: venueType
+                        )
+                        
+                        DispatchQueue.main.async {
+                            if !self.favoriteePlaces.contains(where: { $0.place.id == place.id }) {
+                                self.favoriteePlaces.append((place: place, favoritedAt: favoritedAt))
+                            }
+                        }
+                    }
+                }
+            }
         }
         
         DispatchQueue.main.async {
@@ -185,13 +221,13 @@ struct FavoriteView: View {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         coreDataManager.removeFavorite(placeId: place.id, userId: userId)
         
-        // Remove from local array
-        favoriteePlaces.removeAll { $0.id == place.id }
+        favoriteePlaces.removeAll { $0.place.id == place.id }
     }
 }
 
 struct FavoritePlaceCard: View {
     let place: PlaceData
+    let favoritedAt: Date
     let onTap: () -> Void
     let onRemoveFavorite: () -> Void
     
@@ -262,7 +298,7 @@ struct FavoritePlaceCard: View {
                             
                             Spacer()
                             
-                            Text("save 2 days ago")
+                            Text("saved \(timeAgoString(from: favoritedAt))")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -279,8 +315,6 @@ struct FavoritePlaceCard: View {
         .buttonStyle(PlainButtonStyle())
     }
 }
-
-
 
 #Preview {
     FavoriteView()

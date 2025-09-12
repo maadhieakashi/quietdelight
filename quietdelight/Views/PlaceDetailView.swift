@@ -1,9 +1,10 @@
 //
 //  PlaceDetailView.swift
-//  quietdelight
+//  cafedelight
 //
 //  Created by SAHimeshi 002 on 2025-08-30.
 //
+
 
 import SwiftUI
 import FirebaseAuth
@@ -16,6 +17,22 @@ struct PlaceDetailView: View {
     @State private var isFavorite = false
     @State private var showWriteReview = false
     @State private var showAllReviews = false
+    
+    // Computed properties for average ratings
+    var averageQuietnessRating: Double {
+        guard !reviews.isEmpty else { return 0.0 }
+        return reviews.reduce(0) { $0 + $1.quietnessRating } / Double(reviews.count)
+    }
+    
+    var averageWiFiRating: Double {
+        guard !reviews.isEmpty else { return 0.0 }
+        return reviews.reduce(0) { $0 + $1.wifiStabilityRating } / Double(reviews.count)
+    }
+    
+    var averageFoodRating: Double {
+        guard !reviews.isEmpty else { return 0.0 }
+        return reviews.reduce(0) { $0 + $1.foodTasteRating } / Double(reviews.count)
+    }
     
     var body: some View {
         ScrollView {
@@ -57,31 +74,23 @@ struct PlaceDetailView: View {
                 
                 // Status Bar
                 HStack {
-                    if place.hasWiFi {
-                        Text("Closed 7:00 AM")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
-                    
                     Circle()
-                        .fill(Color.green)
+                        .fill(place.isWorkFriendly ? Color.green : Color.red)
                         .frame(width: 8, height: 8)
                     
-                    Text("Open Now")
+                    Text(place.isWorkFriendly ? "Work Friendly" : "Not Work Friendly")
                         .font(.caption)
-                        .foregroundColor(.green)
+                        .foregroundColor(place.isWorkFriendly ? .green : .red)
                     
                     Spacer()
                     
-                    Button("Recipes") {
-                        // Show recipes
-                    }
-                    .font(.caption)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.brown)
-                    .foregroundColor(.white)
-                    .cornerRadius(15)
+                    Text(place.venueType.rawValue)
+                        .font(.caption)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(place.venueType.color)
+                        .foregroundColor(.white)
+                        .cornerRadius(15)
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)
@@ -94,55 +103,74 @@ struct PlaceDetailView: View {
                         .font(.title2)
                         .fontWeight(.bold)
                     
-                    Text("Cafe chain featuring globally inspired wrap & salad, low calories options and smoothies.")
+                    Text(place.description)
                         .font(.body)
                         .foregroundColor(.secondary)
                     
                     // Features
                     VStack(alignment: .leading, spacing: 8) {
                         if place.hasWiFi {
-                                FeatureRow(icon: "wifi", title: "High-speed WIFI", description: "50+ Mbps")
+                                FeatureRow(icon: "wifi", title: "High-speed WIFI", description: "Available")
                         }
                         
                         if place.hasPowerOutlets {
-                                FeatureRow(icon: "bolt.fill", title: "Power outlets", description: "at every table")
+                                FeatureRow(icon: "bolt.fill", title: "Power outlets", description: "Available")
                         }
                         
                         if place.isQuietZone {
-                                FeatureRow(icon: "speaker.slash.fill", title: "Designated quiet work areas", description: "")
+                                FeatureRow(icon: "speaker.slash.fill", title: "Quiet work zone", description: "Available")
+                        }
+                        
+                        if place.isWorkFriendly {
+                                FeatureRow(icon: "laptopcomputer", title: "Work-friendly environment", description: "Suitable for remote work")
                         }
                     }
                     
                     // Ratings Section
-                    HStack(spacing: 30) {
-                        VStack {
-                            Text("3.0")
+                    if reviews.isEmpty {
+                        VStack(spacing: 15) {
+                            Text("No ratings yet")
                                 .font(.title2)
                                 .fontWeight(.bold)
-                            Text("Quietness")
-                                .font(.caption)
+                                .foregroundColor(.gray)
+                            
+                            Text("Be the first to review this place!")
+                                .font(.body)
                                 .foregroundColor(.secondary)
                         }
-                        
-                        VStack {
-                            Text("4.7")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                            Text("WIFI Stability")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                        .padding(.vertical, 20)
+                        .frame(maxWidth: .infinity)
+                    } else {
+                        HStack(spacing: 30) {
+                            VStack {
+                                Text(String(format: "%.1f", averageQuietnessRating))
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                Text("Quietness")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            VStack {
+                                Text(String(format: "%.1f", averageWiFiRating))
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                Text("WIFI Stability")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            VStack {
+                                Text(String(format: "%.1f", averageFoodRating))
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                Text("Food Taste")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
                         }
-                        
-                        VStack {
-                            Text("4.5")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                            Text("Food Taste")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
+                        .padding(.vertical, 10)
                     }
-                    .padding(.vertical, 10)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
@@ -163,6 +191,10 @@ struct PlaceDetailView: View {
                                     .fontWeight(.bold)
                                     .foregroundColor(.white)
                             }
+                            
+                            Text("Based on \(reviews.count) review\(reviews.count == 1 ? "" : "s")")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.8))
                         }
                         Spacer()
                     }
@@ -193,16 +225,37 @@ struct PlaceDetailView: View {
                     }
                     
                     // Recent Reviews
-                    ForEach(Array(reviews.prefix(3)), id: \.id) { review in
-                        ReviewRowView(review: review)
-                    }
-                    
-                    if reviews.count > 3 {
-                        Button("View All Reviews") {
-                            showAllReviews = true
+                    if reviews.isEmpty {
+                        VStack(spacing: 15) {
+                            Image(systemName: "bubble.left.and.bubble.right")
+                                .font(.system(size: 40))
+                                .foregroundColor(.gray)
+                            
+                            Text("No reviews yet")
+                                .font(.headline)
+                                .foregroundColor(.gray)
+                            
+                            Text("Be the first to share your experience at \(place.name)!")
+                                .font(.body)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
                         }
-                        .foregroundColor(.brown)
-                        .padding(.top, 10)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 30)
+                    } else {
+                        ForEach(Array(reviews.prefix(3)), id: \.id) { review in
+                            ReviewRowView(review: review) { reviewToDelete in
+                                deleteReview(reviewToDelete)
+                            }
+                        }
+                        
+                        if reviews.count > 3 {
+                            Button("View All \(reviews.count) Reviews") {
+                                showAllReviews = true
+                            }
+                            .foregroundColor(.brown)
+                            .padding(.top, 10)
+                        }
                     }
                 }
                 .padding(.horizontal, 20)
@@ -249,13 +302,32 @@ struct PlaceDetailView: View {
             }
         }
     }
+    
+    private func deleteReview(_ review: ReviewData) {
+        guard let currentUserId = Auth.auth().currentUser?.uid,
+              review.userId == currentUserId else {
+            return // Only allow users to delete their own reviews
+        }
+        
+        firebaseManager.deleteReview(reviewId: review.id, placeId: place.id) { success in
+            DispatchQueue.main.async {
+                if success {
+                    self.reviews.removeAll { $0.id == review.id }
+                }
+            }
+        }
+    }
 }
-
-// Correct FeatureRow implementation
-// ...existing code...
 
 struct ReviewRowView: View {
     let review: ReviewData
+    let onDelete: (ReviewData) -> Void
+    @State private var showDeleteAlert = false
+    
+    private var isCurrentUserReview: Bool {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return false }
+        return review.userId == currentUserId
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -288,9 +360,21 @@ struct ReviewRowView: View {
                 
                 Spacer()
                 
-                Text(timeAgoString(from: review.createdAt))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                VStack(alignment: .trailing, spacing: 5) {
+                    Text(timeAgoString(from: review.createdAt))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    if isCurrentUserReview {
+                        Button(action: {
+                            showDeleteAlert = true
+                        }) {
+                            Image(systemName: "trash")
+                                .foregroundColor(.red)
+                                .font(.caption)
+                        }
+                    }
+                }
             }
             
             Text(review.comment)
@@ -306,6 +390,14 @@ struct ReviewRowView: View {
             Divider()
         }
         .padding(.vertical, 5)
+        .alert("Delete Review", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                onDelete(review)
+            }
+        } message: {
+            Text("Are you sure you want to delete this review? This action cannot be undone.")
+        }
     }
 }
 
@@ -351,8 +443,6 @@ struct BackButton: View {
     }
 }
 
-// ...existing code...
-
 #Preview {
     PlaceDetailView(place: PlaceData(
         id: "1",
@@ -362,6 +452,7 @@ struct BackButton: View {
         longitude: 79.861244,
         rating: 4.1,
         imageURL: "",
+        description: "Cozy cafe offering quality coffee and light meals in a comfortable setting. Perfect for work, study, or casual meetings with friends.",
         isWorkFriendly: true,
         hasWiFi: true,
         hasPowerOutlets: true,

@@ -1,29 +1,15 @@
 //
 //  HomeView.swift
-//  quietdelightcafe
+//  cafedelight
 //
 //  Created by SAHimeshi 002 on 2025-08-20.
 //
-
+//
 
 import SwiftUI
 import FirebaseAuth
 
-struct HomeView: View {
-    @State private var forgotPassword = false
-    
-    var body: some View {
-        VStack {
-            Text("Hello, World!")
-            Button("Forgot Password?") {
-                forgotPassword = true
-            }
-        }
-        .navigationDestination(isPresented: $forgotPassword) {
-            ForgotPasswordView()
-        }
-    }
-}
+
 
 struct TabBarView: View {
     @State private var selectedTab = 0
@@ -125,7 +111,7 @@ struct HomeContentView: View {
             }
         }
         
-        return Array(places.prefix(4)) // Show only 4 places
+        return Array(places.prefix(5)) // Show only 5 places
     }
     
     var body: some View {
@@ -204,26 +190,6 @@ struct HomeContentView: View {
                         }
                     }
                     .padding(.horizontal, 20)
-                    
-                    // Quick filter Tags
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 10) {
-                            ForEach(quickFilters, id: \.self) { filter in
-                                FilterTag(
-                                    text: filter,
-                                    isSelected: selectedFilter == filter,
-                                    action: {
-                                        if selectedFilter == filter {
-                                            selectedFilter = nil
-                                        } else {
-                                            selectedFilter = filter
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                    }
                     
                     // Work Friendly Cafes Section
                     VStack(alignment: .leading, spacing: 15) {
@@ -483,6 +449,4 @@ struct HomeView_Previews: PreviewProvider {
     HomeContentView()
 }
 
-#Preview("Home View") {
-    HomeView()
-}
+
