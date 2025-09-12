@@ -57,7 +57,7 @@ struct FavoriteView: View {
                     .cornerRadius(25)
                     
                     Button(action: {
-                        // Filter action
+                        // TODO: Implement filter functionality
                     }) {
                         Image(systemName: "slider.horizontal.3")
                             .foregroundColor(.white)

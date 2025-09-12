@@ -25,7 +25,6 @@ struct Cafe: Identifiable, Hashable {
     let cuisine: String?
     let phoneNumber: String?
     let website: String?
-    var isFavorite: Bool = false
     
     var distanceString: String {
         if distance < 1000 {
@@ -284,7 +283,8 @@ class CafeSearchService: ObservableObject {
             let specialties = ["Specialty Coffee", "Quiet Study Space", "Fast WiFi", "Great Atmosphere"]
             return specialties.randomElement() ?? "Coffee Shop"
         case .restaurant:
-            return "Fine Dining Experience"
+            let specialties = ["Fine Dining", "Casual Dining", "Family Restaurant", "Authentic Cuisine"]
+            return specialties.randomElement() ?? "Fine Dining Experience"
         }
     }
 }

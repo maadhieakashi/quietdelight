@@ -404,10 +404,10 @@ struct DetailedReviewView: View {
                 }
             }
             
-            // Helpful Button
+            // Helpful Button (placeholder for future feature)
             HStack {
                 Button(action: {
-                    // Handle helpful action
+                    // TODO: Implement helpful functionality
                 }) {
                     HStack {
                         Image(systemName: "hand.thumbsup")

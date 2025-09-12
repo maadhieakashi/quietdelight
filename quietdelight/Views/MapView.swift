@@ -38,9 +38,7 @@ struct MapView: View {
     @State private var cafes: [Cafe] = []
     @State private var searchText = ""
     @State private var selectedPlace: PlaceData?
-    @State private var selectedCafe: Cafe?
     @State private var showPlaceDetail = false
-    @State private var showCafeDetail = false
     @State private var showFilters = false
     @State private var isLoading = false
     
