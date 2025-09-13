@@ -46,7 +46,7 @@ struct TabBarView: View {
         }
         .accentColor(Color(hex: "5A3529"))
         .onAppear {
-            // Configure TabBar appearance
+            // TabBar
             let tabBarAppearance = UITabBarAppearance()
             tabBarAppearance.configureWithOpaqueBackground()
             tabBarAppearance.backgroundColor = UIColor.white
@@ -85,6 +85,7 @@ struct HomeContentView: View {
     //user data in firebse
     @State private var userName = ""
     @State private var userImageURL = ""
+    @State private var userEmail = ""
     
     let quickFilters = ["Quiet", "Fast WIFI", "Power Outlet"]
     
@@ -119,7 +120,7 @@ struct HomeContentView: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    // Header with user greeting and stats
+                  
                     VStack(alignment: .leading, spacing: 20) {
                         // User Greeting
                         HStack(alignment: .center) {
@@ -128,15 +129,20 @@ struct HomeContentView: View {
                                     .font(.title2)
                                     .fontWeight(.semibold)
                                     .foregroundColor(.primary)
-                                
-                                Text("Find your perfect workspace")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
+                                if !userEmail.isEmpty {
+                                    Text(userEmail)
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                } else {
+                                    Text("Find your perfect workspace")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                }
                             }
 
                             Spacer()
 
-                            // User Propic or Default
+                            // User Propic
                             if let url = URL(string: userImageURL), !userImageURL.isEmpty {
                                 AsyncImage(url: url) { image in
                                     image
@@ -224,7 +230,7 @@ struct HomeContentView: View {
                         LazyVGrid(columns: [
                             GridItem(.flexible(), spacing: 8),
                             GridItem(.flexible(), spacing: 8)
-                        ], spacing: 16) {
+                        ], spacing: 20) {
                             ForEach(filteredPlaces, id: \.id) { place in
                                 HomePlaceCard(place: place, onFavoriteChange: {
                                     updateFavoriteCount()
@@ -267,10 +273,11 @@ struct HomeContentView: View {
         guard let user = Auth.auth().currentUser else {
             userName = "Guest"
             userImageURL = ""
+            userEmail = ""
             return
         }
 
-        // Fetch userdata firestore
+        //userdata firestore
         authManager.getUserData { userData in
             DispatchQueue.main.async {
                 if let firestoreUsername = userData?["username"] as? String, !firestoreUsername.isEmpty {
@@ -288,14 +295,23 @@ struct HomeContentView: View {
                 } else {
                     self.userImageURL = ""
                 }
+
+                // email
+                if let firestoreEmail = userData?["email"] as? String, !firestoreEmail.isEmpty {
+                    self.userEmail = firestoreEmail
+                } else if let email = user.email {
+                    self.userEmail = email
+                } else {
+                    self.userEmail = ""
+                }
             }
         }
 
-        // Load favorites count
+        // favorites count
         let favorites = coreDataManager.fetchFavorites(for: user.uid)
         favoriteCount = favorites.count
 
-        // Load reviews count from Firebase
+        // reviews count
         firebaseManager.fetchUserReviewCount(for: user.uid) { count in
             DispatchQueue.main.async {
                 self.reviewCount = count
@@ -385,7 +401,7 @@ struct HomePlaceCard: View {
                                 .font(.system(size: 24))
                         )
                 }
-                .frame(height: 130)
+                .frame(height: 100)
                 .clipped()
                 .overlay(
                     VStack {
@@ -418,58 +434,61 @@ struct HomePlaceCard: View {
                 )
                 
                 // Place Info
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 8) {
                     // Place name with better spacing
                     Text(place.name)
                         .font(.headline)
                         .fontWeight(.semibold)
                         .foregroundColor(.primary)
                         .lineLimit(1)
+                        .multilineTextAlignment(.leading)
                     
                     // Address with consistent styling
                     Text(place.address)
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .lineLimit(2)
+                        .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                     
                     // Rating and work-friendly indicator
                     HStack(alignment: .center, spacing: 8) {
-                        HStack(spacing: 4) {
+                        HStack(spacing: 3) {
                             Image(systemName: "star.fill")
                                 .foregroundColor(.yellow)
-                                .font(.system(size: 12))
+                                .font(.system(size: 11))
                             Text(String(format: "%.1f", place.rating))
-                                .font(.caption)
+                                .font(.caption2)
                                 .fontWeight(.medium)
                                 .foregroundColor(.secondary)
                         }
                         
                         Spacer()
                         
-                        // Work features indicators
-                        HStack(spacing: 6) {
+                        // Work features
+                        HStack(spacing: 4) {
                             if place.hasWiFi {
                                 Image(systemName: "wifi")
                                     .foregroundColor(Color(hex: "5A3529"))
-                                    .font(.system(size: 12))
+                                    .font(.system(size: 10))
                             }
                             
                             if place.hasPowerOutlets {
                                 Image(systemName: "bolt.fill")
                                     .foregroundColor(Color(hex: "5A3529"))
-                                    .font(.system(size: 12))
+                                    .font(.system(size: 10))
                             }
                             
                             if place.isQuietZone {
                                 Image(systemName: "speaker.slash.fill")
                                     .foregroundColor(Color(hex: "5A3529"))
-                                    .font(.system(size: 12))
+                                    .font(.system(size: 10))
                             }
                         }
                     }
                 }
-                .padding(16)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
             }
             .background(Color(.systemBackground))
             .cornerRadius(16)
@@ -490,7 +509,7 @@ struct HomePlaceCard: View {
             coreDataManager.addFavorite(placeId: place.id, userId: userId)
         }
         isFavorite.toggle()
-        onFavoriteChange() // Update the favorite count in parent view
+        onFavoriteChange() // favorite count
     }
     
     private func checkFavoriteStatus() {
