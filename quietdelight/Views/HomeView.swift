@@ -160,10 +160,10 @@ struct HomeContentView: View {
                                 .clipShape(Circle())
                             } else {
                                 Circle()
-                                    .fill(Color.gray.opacity(0.3))
+                                    .fill(Color.brown.opacity(0.3))
                                     .overlay(
                                         Image(systemName: "person.fill")
-                                            .foregroundColor(.gray)
+                                            .foregroundColor(.black)
                                     )
                                     .frame(width: 55, height: 55)
                             }

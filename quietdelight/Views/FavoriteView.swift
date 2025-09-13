@@ -164,21 +164,31 @@ struct FavoriteView: View {
           
             let coreDataPlaces = coreDataManager.fetchPlaces()
             if let existingPlace = coreDataPlaces.first(where: { $0.id == placeId }) {
-                let place = PlaceData(
-                    id: existingPlace.id ?? "",
-                    name: existingPlace.name ?? "",
-                    address: existingPlace.address ?? "",
-                    latitude: existingPlace.latitude,
-                    longitude: existingPlace.longitude,
-                    rating: existingPlace.rating,
-                    imageURL: existingPlace.imageURL ?? "",
-                    description: existingPlace.placeDescription ?? "",
-                    isWorkFriendly: existingPlace.isWorkFriendly,
-                    hasWiFi: existingPlace.hasWiFi,
-                    hasPowerOutlets: existingPlace.hasPowerOutlets,
-                    isQuietZone: existingPlace.isQuietZone
-                )
-                places.append((place: place, favoritedAt: favoritedAt))
+                // Fetch real-time rating from reviews
+                fetchRealTimeRating(for: placeId) { realRating in
+                    let place = PlaceData(
+                        id: existingPlace.id ?? "",
+                        name: existingPlace.name ?? "",
+                        address: existingPlace.address ?? "",
+                        latitude: existingPlace.latitude,
+                        longitude: existingPlace.longitude,
+                        rating: realRating,
+                        imageURL: existingPlace.imageURL ?? "",
+                        description: existingPlace.placeDescription ?? "",
+                        isWorkFriendly: existingPlace.isWorkFriendly,
+                        hasWiFi: existingPlace.hasWiFi,
+                        hasPowerOutlets: existingPlace.hasPowerOutlets,
+                        isQuietZone: existingPlace.isQuietZone
+                    )
+                    
+                    DispatchQueue.main.async {
+                        if let index = self.favoriteePlaces.firstIndex(where: { $0.place.id == placeId }) {
+                            self.favoriteePlaces[index] = (place: place, favoritedAt: favoritedAt)
+                        } else {
+                            self.favoriteePlaces.append((place: place, favoritedAt: favoritedAt))
+                        }
+                    }
+                }
             } else {
                
                 firebaseManager.db.collection("places").document(placeId).getDocument { document, error in
@@ -186,25 +196,28 @@ struct FavoriteView: View {
                         let venueTypeString = data["venueType"] as? String
                         let venueType = VenueType(rawValue: venueTypeString ?? "") ?? .cafe
                         
-                        let place = PlaceData(
-                            id: document.documentID,
-                            name: data["name"] as? String ?? "",
-                            address: data["address"] as? String ?? "",
-                            latitude: data["latitude"] as? Double ?? 0.0,
-                            longitude: data["longitude"] as? Double ?? 0.0,
-                            rating: data["rating"] as? Double ?? 0.0,
-                            imageURL: data["imageURL"] as? String ?? "",
-                            description: data["description"] as? String ?? "",
-                            isWorkFriendly: data["isWorkFriendly"] as? Bool ?? false,
-                            hasWiFi: data["hasWiFi"] as? Bool ?? false,
-                            hasPowerOutlets: data["hasPowerOutlets"] as? Bool ?? false,
-                            isQuietZone: data["isQuietZone"] as? Bool ?? false,
-                            venueType: venueType
-                        )
-                        
-                        DispatchQueue.main.async {
-                            if !self.favoriteePlaces.contains(where: { $0.place.id == place.id }) {
-                                self.favoriteePlaces.append((place: place, favoritedAt: favoritedAt))
+                        // Fetch real-time rating from reviews
+                        self.fetchRealTimeRating(for: placeId) { realRating in
+                            let place = PlaceData(
+                                id: document.documentID,
+                                name: data["name"] as? String ?? "",
+                                address: data["address"] as? String ?? "",
+                                latitude: data["latitude"] as? Double ?? 0.0,
+                                longitude: data["longitude"] as? Double ?? 0.0,
+                                rating: realRating,
+                                imageURL: data["imageURL"] as? String ?? "",
+                                description: data["description"] as? String ?? "",
+                                isWorkFriendly: data["isWorkFriendly"] as? Bool ?? false,
+                                hasWiFi: data["hasWiFi"] as? Bool ?? false,
+                                hasPowerOutlets: data["hasPowerOutlets"] as? Bool ?? false,
+                                isQuietZone: data["isQuietZone"] as? Bool ?? false,
+                                venueType: venueType
+                            )
+                            
+                            DispatchQueue.main.async {
+                                if !self.favoriteePlaces.contains(where: { $0.place.id == place.id }) {
+                                    self.favoriteePlaces.append((place: place, favoritedAt: favoritedAt))
+                                }
                             }
                         }
                     }
@@ -214,6 +227,24 @@ struct FavoriteView: View {
         
         DispatchQueue.main.async {
             self.favoriteePlaces = places
+        }
+    }
+    
+    private func fetchRealTimeRating(for placeId: String, completion: @escaping (Double) -> Void) {
+        firebaseManager.fetchReviews(for: placeId) { reviews in
+            guard !reviews.isEmpty else {
+                completion(0.0)
+                return
+            }
+            
+            // Calculate average rating from reviews using the same logic as updatePlaceRating
+            let averageQuietness = reviews.reduce(0.0) { $0 + $1.quietnessRating } / Double(reviews.count)
+            let averageWiFi = reviews.reduce(0.0) { $0 + $1.wifiStabilityRating } / Double(reviews.count)
+            let averageFood = reviews.reduce(0.0) { $0 + $1.foodTasteRating } / Double(reviews.count)
+            
+            // Calculate overall rating as average of the three categories
+            let overallRating = (averageQuietness + averageWiFi + averageFood) / 3.0
+            completion(overallRating)
         }
     }
     
