@@ -5,7 +5,6 @@
 //  Created by SAHimeshi 002 on 2025-08-30.
 //
 
-
 import SwiftUI
 import FirebaseAuth
 
@@ -18,7 +17,7 @@ struct PlaceDetailView: View {
     @State private var showWriteReview = false
     @State private var showAllReviews = false
     
-    // Computed properties for average ratings
+    
     var averageQuietnessRating: Double {
         guard !reviews.isEmpty else { return 0.0 }
         return reviews.reduce(0) { $0 + $1.quietnessRating } / Double(reviews.count)
@@ -42,275 +41,317 @@ struct PlaceDetailView: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                // Header Image
-                AsyncImage(url: URL(string: place.imageURL)) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .overlay(
-                            Image(systemName: "photo")
-                                .foregroundColor(.gray)
-                                .font(.system(size: 40))
-                        )
-                }
-                .frame(height: 250)
-                .clipped()
-                .overlay(
-                    VStack {
-                        HStack {
-                            Spacer()
-                            Button(action: toggleFavorite) {
-                                Image(systemName: isFavorite ? "heart.fill" : "heart")
-                                    .foregroundColor(isFavorite ? .red : .white)
-                                    .font(.system(size: 24))
-                                    .padding(10)
-                                    .background(Color.black.opacity(0.5))
-                                    .clipShape(Circle())
-                            }
-                        }
-                        .padding(.top, 10)
-                        .padding(.trailing, 15)
-                        Spacer()
+            LazyVStack(alignment: .leading, spacing: 0, pinnedViews: []) {
+                // Header Image with Modern Design
+                ZStack(alignment: .topTrailing) {
+                    AsyncImage(url: URL(string: place.imageURL)) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Rectangle()
+                            .fill(Color(.systemGray5))
+                            .overlay(
+                                Image(systemName: "photo")
+                                    .foregroundColor(.secondary)
+                                    .font(.system(size: 40, weight: .light))
+                            )
                     }
-                )
-                
-                // Status Bar
-                HStack {
-                    Circle()
-                        .fill(place.isWorkFriendly ? Color.green : Color.red)
-                        .frame(width: 8, height: 8)
+                    .frame(height: 280)
+                    .clipped()
                     
-                    Text(place.isWorkFriendly ? "Work Friendly" : "Not Work Friendly")
-                        .font(.caption)
-                        .foregroundColor(place.isWorkFriendly ? .green : .red)
-                    
-                    Spacer()
-                    
-                    Text(place.venueType.rawValue)
-                        .font(.caption)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(place.venueType.color)
-                        .foregroundColor(.white)
-                        .cornerRadius(15)
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 10)
-                .background(Color.black)
-                .foregroundColor(.white)
-                
-                // About Section
-                VStack(alignment: .leading, spacing: 15) {
-                    Text("About")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    Text(place.description)
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                    
-                    // Features
-                    VStack(alignment: .leading, spacing: 8) {
-                        if place.hasWiFi {
-                                FeatureRow(icon: "wifi", title: "High-speed WIFI", description: "Available")
-                        }
-                        
-                        if place.hasPowerOutlets {
-                                FeatureRow(icon: "bolt.fill", title: "Power outlets", description: "Available")
-                        }
-                        
-                        if place.isQuietZone {
-                                FeatureRow(icon: "speaker.slash.fill", title: "Quiet work zone", description: "Available")
-                        }
-                        
-                        if place.isWorkFriendly {
-                                FeatureRow(icon: "laptopcomputer", title: "Work-friendly environment", description: "Suitable for remote work")
-                        }
+                    // Favorite Button with Modern Styling
+                    Button(action: toggleFavorite) {
+                        Image(systemName: isFavorite ? "heart.fill" : "heart")
+                            .foregroundColor(isFavorite ? .red : .white)
+                            .font(.system(size: 20, weight: .medium))
+                            .frame(width: 44, height: 44)
+                            .background(
+                                Circle()
+                                    .fill(.ultraThinMaterial)
+                                    .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+                            )
                     }
-                    
-                    // Ratings Section
-                    if reviews.isEmpty {
-                        VStack(spacing: 15) {
-                            Text("No ratings yet")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.gray)
-                            
-                            Text("Be the first to review this place!")
-                                .font(.body)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
-                        .padding(.vertical, 20)
-                        .frame(maxWidth: .infinity)
-                    } else {
-                        VStack(spacing: 15) {
-                            Text("Average Ratings")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            HStack(spacing: 0) {
-                                VStack(spacing: 8) {
-                                    Text(String(format: "%.1f", averageQuietnessRating))
-                                        .font(.title2)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.primary)
-                                    Text("Quietness")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                        .multilineTextAlignment(.center)
-                                }
-                                .frame(maxWidth: .infinity)
-                                
-                                VStack(spacing: 8) {
-                                    Text(String(format: "%.1f", averageWiFiRating))
-                                        .font(.title2)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.primary)
-                                    Text("WIFI Stability")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                        .multilineTextAlignment(.center)
-                                }
-                                .frame(maxWidth: .infinity)
-                                
-                                VStack(spacing: 8) {
-                                    Text(String(format: "%.1f", averageFoodRating))
-                                        .font(.title2)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.primary)
-                                    Text("Food Taste")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                        .multilineTextAlignment(.center)
-                                }
-                                .frame(maxWidth: .infinity)
-                            }
-                        }
-                        .padding(.vertical, 15)
-                    }
+                    .padding(.top, 60)
+                    .padding(.trailing, 20)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
                 
-                // Total Rating Card
+                // Modern Status Indicator
                 VStack(spacing: 0) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Total Rating")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
+                    HStack(spacing: 12) {
+                        // Work Friendly Status
+                        HStack(spacing: 8) {
+                            Circle()
+                                .fill(place.isWorkFriendly ? .green : .red)
+                                .frame(width: 10, height: 10)
                             
-                            HStack(spacing: 8) {
-                                Image(systemName: "star.fill")
-                                    .foregroundColor(.yellow)
-                                    .font(.title2)
-                                Text(String(format: "%.1f", reviews.isEmpty ? 0.0 : overallRating))
-                                    .font(.largeTitle)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Based on \(reviews.count) review\(reviews.count == 1 ? "" : "s")")
-                                    .font(.subheadline)
-                                    .foregroundColor(.white.opacity(0.9))
-                                
-                                if !reviews.isEmpty {
-                                    Text("Calculated from user ratings")
-                                        .font(.caption)
-                                        .foregroundColor(.white.opacity(0.7))
-                                }
-                            }
+                            Text(place.isWorkFriendly ? "Work Friendly" : "Not Work Friendly")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(place.isWorkFriendly ? .green : .red)
                         }
+                        
                         Spacer()
+                        
+                        // Venue Type Badge
+                        Text(place.venueType.rawValue)
+                            .font(.system(size: 12, weight: .semibold))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(
+                                Capsule()
+                                    .fill(place.venueType.color)
+                            )
+                            .foregroundColor(.white)
                     }
-                    .padding(24)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 16)
                     .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.brown)
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
                     )
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
                 
-                // Reviews Section
-                VStack(alignment: .leading, spacing: 20) {
-                    HStack(alignment: .center) {
-                        Text("Reviews")
-                            .font(.title2)
-                            .fontWeight(.bold)
+                // Main Content Container
+                VStack(alignment: .leading, spacing: 32) {
+                    // Place Title and Info
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text(place.name)
+                            .font(.system(size: 28, weight: .bold, design: .default))
+                            .foregroundColor(.primary)
                         
-                        Spacer()
-                        
-                        Button("Write Review") {
-                            showWriteReview = true
-                        }
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(Color.brown)
-                        .foregroundColor(.white)
-                        .cornerRadius(22)
+                        Text(place.address)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.leading)
                     }
+                    .padding(.horizontal, 24)
                     
-                    // Recent Reviews
-                    if reviews.isEmpty {
-                        VStack(spacing: 20) {
-                            Image(systemName: "bubble.left.and.bubble.right")
-                                .font(.system(size: 50))
-                                .foregroundColor(.gray.opacity(0.6))
-                            
-                            VStack(spacing: 8) {
-                                Text("No reviews yet")
-                                    .font(.title3)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.gray)
-                                
-                                Text("Be the first to share your experience at \(place.name)!")
-                                    .font(.body)
-                                    .foregroundColor(.secondary)
-                                    .multilineTextAlignment(.center)
-                                    .lineLimit(2)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 40)
-                    } else {
-                        VStack(spacing: 16) {
-                            ForEach(Array(reviews.prefix(3)), id: \.id) { review in
-                                ReviewRowView(review: review) { reviewToDelete in
-                                    deleteReview(reviewToDelete)
-                                }
+                    // About Section with Modern Typography
+                    VStack(alignment: .leading, spacing: 20) {
+                        Text("About")
+                            .font(.system(size: 24, weight: .bold, design: .default))
+                            .foregroundColor(.primary)
+                        
+                        Text(place.description)
+                            .font(.system(size: 16, weight: .regular))
+                            .foregroundColor(.secondary)
+                            .lineSpacing(4)
+                            .multilineTextAlignment(.leading)
+                        
+                        // Modern Features Grid
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: 16) {
+                            if place.hasWiFi {
+                                ModernFeatureCard(
+                                    icon: "wifi",
+                                    title: "High-speed WiFi",
+                                    description: "Available",
+                                    color: .blue
+                                )
                             }
                             
-                            if reviews.count > 3 {
-                                Button("View All \(reviews.count) Reviews") {
-                                    showAllReviews = true
-                                }
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundColor(.brown)
-                                .padding(.top, 8)
-                                .frame(maxWidth: .infinity, alignment: .center)
+                            if place.hasPowerOutlets {
+                                ModernFeatureCard(
+                                    icon: "bolt.fill",
+                                    title: "Power Outlets",
+                                    description: "Available",
+                                    color: .orange
+                                )
+                            }
+                            
+                            if place.isQuietZone {
+                                ModernFeatureCard(
+                                    icon: "speaker.slash.fill",
+                                    title: "Quiet Zone",
+                                    description: "Available",
+                                    color: .purple
+                                )
+                            }
+                            
+                            if place.isWorkFriendly {
+                                ModernFeatureCard(
+                                    icon: "laptopcomputer",
+                                    title: "Work Friendly",
+                                    description: "Remote work suitable",
+                                    color: .green
+                                )
                             }
                         }
                     }
+                    .padding(.horizontal, 24)
+                    
+                    // Modern Ratings Section
+                    VStack(alignment: .leading, spacing: 24) {
+                        if reviews.isEmpty {
+                            VStack(spacing: 20) {
+                                Text("No ratings yet")
+                                    .font(.system(size: 22, weight: .bold))
+                                    .foregroundColor(.secondary)
+                                
+                                Text("Be the first to review this place!")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.secondary.opacity(0.8))
+                                    .multilineTextAlignment(.center)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 32)
+                        } else {
+                            VStack(alignment: .leading, spacing: 20) {
+                                Text("Average Ratings")
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundColor(.primary)
+                                
+                                HStack(spacing: 0) {
+                                    RatingCard(
+                                        value: averageQuietnessRating,
+                                        title: "Quietness",
+                                        color: .purple
+                                    )
+                                    
+                                    RatingCard(
+                                        value: averageWiFiRating,
+                                        title: "WiFi Stability",
+                                        color: .blue
+                                    )
+                                    
+                                    RatingCard(
+                                        value: averageFoodRating,
+                                        title: "Food Taste",
+                                        color: .orange
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    
+                    // Modern Total Rating Card
+                    VStack(spacing: 0) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Overall Rating")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundColor(.white)
+                                
+                                HStack(spacing: 12) {
+                                    Image(systemName: "star.fill")
+                                        .foregroundColor(.yellow)
+                                        .font(.system(size: 24, weight: .medium))
+                                    
+                                    Text(String(format: "%.1f", reviews.isEmpty ? 0.0 : overallRating))
+                                        .font(.system(size: 36, weight: .bold, design: .rounded))
+                                        .foregroundColor(.white)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text("Based on \(reviews.count) review\(reviews.count == 1 ? "" : "s")")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.9))
+                                    
+                                    if !reviews.isEmpty {
+                                        Text("Calculated from user ratings")
+                                            .font(.system(size: 12, weight: .regular))
+                                            .foregroundColor(.white.opacity(0.7))
+                                    }
+                                }
+                            }
+                            Spacer()
+                        }
+                        .padding(28)
+                        .background(
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color(hex: "5A3529"), Color(hex: "5A3529").opacity(0.8)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .shadow(color: .black.opacity(0.1), radius: 12, x: 0, y: 6)
+                        )
+                    }
+                    .padding(.horizontal, 24)
+                
+                    //  Reviews
+                    VStack(alignment: .leading, spacing: 24) {
+                        HStack(alignment: .center) {
+                            Text("Reviews")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                            
+                            Button("Write Review") {
+                                showWriteReview = true
+                            }
+                            .font(.system(size: 14, weight: .semibold))
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .background(
+                                Capsule()
+                                    .fill(Color(hex: "5A3529"))
+                                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                            )
+                            .foregroundColor(.white)
+                        }
+                  
+                        // Reviews
+                        if reviews.isEmpty {
+                            VStack(spacing: 24) {
+                                Image(systemName: "bubble.left.and.bubble.right")
+                                    .font(.system(size: 56, weight: .light))
+                                    .foregroundColor(.secondary.opacity(0.6))
+                                
+                                VStack(spacing: 12) {
+                                    Text("No reviews yet")
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundColor(.secondary)
+                                    
+                                    Text("Be the first to share your experience at \(place.name)!")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(.secondary.opacity(0.8))
+                                        .multilineTextAlignment(.center)
+                                        .lineLimit(3)
+                                        .padding(.horizontal, 16)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 48)
+                        } else {
+                            LazyVStack(spacing: 20) {
+                                ForEach(Array(reviews.prefix(3)), id: \.id) { review in
+                                    ModernReviewCard(review: review) { reviewToDelete in
+                                        deleteReview(reviewToDelete)
+                                    }
+                                }
+                                
+                                if reviews.count > 3 {
+                                    Button("View All \(reviews.count) Reviews") {
+                                        showAllReviews = true
+                                    }
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.brown)
+                                    .padding(.top, 8)
+                                    .frame(maxWidth: .infinity)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 40)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 30)
-                .padding(.bottom, 40)
+                .padding(.top, 24)
             }
         }
         .navigationBarBackButtonHidden(true)
-        .navigationBarItems(leading: BackButton())
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                ModernBackButton()
+            }
+        }
         .onAppear {
             loadReviews()
             checkFavoriteStatus()
@@ -365,7 +406,78 @@ struct PlaceDetailView: View {
     }
 }
 
-struct ReviewRowView: View {
+// MARK: - Modern Components
+
+struct ModernFeatureCard: View {
+    let icon: String
+    let title: String
+    let description: String
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(color)
+                    .font(.system(size: 20, weight: .medium))
+                    .frame(width: 24, height: 24)
+                
+                Spacer()
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.primary)
+                
+                Text(description)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemGray6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(color.opacity(0.2), lineWidth: 1)
+                )
+        )
+    }
+}
+
+struct RatingCard: View {
+    let value: Double
+    let title: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(String(format: "%.1f", value))
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundColor(color)
+            
+            Text(title)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemGray6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(color.opacity(0.2), lineWidth: 1)
+                )
+        )
+    }
+}
+
+struct ModernReviewCard: View {
     let review: ReviewData
     let onDelete: (ReviewData) -> Void
     @State private var showDeleteAlert = false
@@ -376,40 +488,43 @@ struct ReviewRowView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 12) {
                 AsyncImage(url: URL(string: review.userImageURL)) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                 } placeholder: {
                     Circle()
-                        .fill(Color.gray.opacity(0.3))
+                        .fill(Color(.systemGray5))
                         .overlay(
                             Image(systemName: "person.fill")
-                                .foregroundColor(.gray)
+                                .foregroundColor(.secondary)
+                                .font(.system(size: 16, weight: .medium))
                         )
                 }
-                .frame(width: 40, height: 40)
+                .frame(width: 44, height: 44)
                 .clipShape(Circle())
                 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(review.userName)
-                        .font(.headline)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.primary)
                     
-                    HStack {
-                        StarsView(rating: review.rating)
+                    HStack(spacing: 8) {
+                        ModernStarsView(rating: review.rating)
                         Text(String(format: "%.1f", review.rating))
-                            .font(.caption)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.secondary)
                     }
                 }
                 
                 Spacer()
                 
-                VStack(alignment: .trailing, spacing: 5) {
+                VStack(alignment: .trailing, spacing: 8) {
                     Text(timeAgoString(from: review.createdAt))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.secondary.opacity(0.8))
                     
                     if isCurrentUserReview {
                         Button(action: {
@@ -417,25 +532,40 @@ struct ReviewRowView: View {
                         }) {
                             Image(systemName: "trash")
                                 .foregroundColor(.red)
-                                .font(.caption)
+                                .font(.system(size: 14, weight: .medium))
+                                .frame(width: 28, height: 28)
+                                .background(
+                                    Circle()
+                                        .fill(Color(.systemGray6))
+                                )
                         }
                     }
                 }
             }
             
             Text(review.comment)
-                .font(.body)
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(.primary)
+                .lineSpacing(2)
             
             // Feature tags
-            HStack {
-                if !review.powerOutletStatus.isEmpty {
-                    FeatureTag(text: review.powerOutletStatus)
+            if !review.powerOutletStatus.isEmpty {
+                HStack {
+                    ModernFeatureTag(text: review.powerOutletStatus)
+                    Spacer()
                 }
             }
-            
-            Divider()
         }
-        .padding(.vertical, 5)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color(.systemGray5), lineWidth: 1)
+                )
+        )
         .alert("Delete Review", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
@@ -447,21 +577,27 @@ struct ReviewRowView: View {
     }
 }
 
-struct FeatureTag: View {
+struct ModernFeatureTag: View {
     let text: String
     
     var body: some View {
         Text(text)
-            .font(.caption)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color.blue.opacity(0.1))
+            .font(.system(size: 12, weight: .medium))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(Color.blue.opacity(0.1))
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                    )
+            )
             .foregroundColor(.blue)
-            .cornerRadius(10)
     }
 }
 
-struct StarsView: View {
+struct ModernStarsView: View {
     let rating: Double
     
     var body: some View {
@@ -469,9 +605,63 @@ struct StarsView: View {
             ForEach(0..<5) { index in
                 Image(systemName: Double(index) < rating ? "star.fill" : "star")
                     .foregroundColor(.yellow)
-                    .font(.caption)
+                    .font(.system(size: 12, weight: .medium))
             }
         }
+    }
+}
+
+struct ModernBackButton: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        Button(action: {
+            dismiss()
+        }) {
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 16, weight: .semibold))
+                Text("Back")
+                    .font(.system(size: 16, weight: .medium))
+            }
+            .foregroundColor(.primary)
+        }
+    }
+}
+
+// MARK: - Legacy Components (for compatibility)
+
+struct ReviewRowView: View {
+    let review: ReviewData
+    let onDelete: (ReviewData) -> Void
+    @State private var showDeleteAlert = false
+    
+    private var isCurrentUserReview: Bool {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return false }
+        return review.userId == currentUserId
+    }
+    
+    var body: some View {
+        // Use the modern card instead
+        ModernReviewCard(review: review, onDelete: onDelete)
+    }
+}
+
+struct FeatureTag: View {
+    let text: String
+    
+    var body: some View {
+        // Use the modern version
+        ModernFeatureTag(text: text)
+    }
+}
+
+struct StarsView: View {
+    let rating: Double
+    
+    var body: some View {
+        // Use the modern version
+        ModernStarsView(rating: rating)
     }
 }
 
@@ -479,13 +669,8 @@ struct BackButton: View {
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
-        Button(action: {
-            presentationMode.wrappedValue.dismiss()
-        }) {
-            Image(systemName: "chevron.left")
-                .foregroundColor(.black)
-                .font(.title2)
-        }
+        // Use the modern version
+        ModernBackButton()
     }
 }
 
