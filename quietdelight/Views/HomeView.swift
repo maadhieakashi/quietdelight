@@ -80,6 +80,7 @@ struct HomeContentView: View {
     @State private var reviewCount = 0
     @State private var workFriendlyPlaces: [PlaceData] = []
     @State private var selectedFilter: String? = nil
+    @State private var refreshTrigger = false
     
     //user data in firebse
     @State private var userName = ""
@@ -111,7 +112,7 @@ struct HomeContentView: View {
             }
         }
         
-        return Array(places.prefix(5)) // Show only 5 places
+        return Array(places.prefix(10))
     }
     
     var body: some View {
@@ -119,13 +120,19 @@ struct HomeContentView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     // Header with user greeting and stats
-                    VStack(alignment: .leading, spacing: 15) {
+                    VStack(alignment: .leading, spacing: 20) {
                         // User Greeting
-                        HStack {
-                            Text("Hi, \(userName)")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.primary)
+                        HStack(alignment: .center) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Hi, \(userName)")
+                                    .font(.title2)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.primary)
+                                
+                                Text("Find your perfect workspace")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
 
                             Spacer()
 
@@ -143,7 +150,7 @@ struct HomeContentView: View {
                                                 .foregroundColor(.gray)
                                         )
                                 }
-                                .frame(width: 50, height: 50)
+                                .frame(width: 55, height: 55)
                                 .clipShape(Circle())
                             } else {
                                 Circle()
@@ -152,12 +159,12 @@ struct HomeContentView: View {
                                         Image(systemName: "person.fill")
                                             .foregroundColor(.gray)
                                     )
-                                    .frame(width: 50, height: 50)
+                                    .frame(width: 55, height: 55)
                             }
                         }
                         
                         // Stats Cards
-                        HStack(spacing: 15) {
+                        HStack(spacing: 12) {
                             StatCard(number: favoriteCount, label: "Favorites", color: Color(hex: "5A3529"))
                             StatCard(number: reviewCount, label: "Reviews", color: Color(hex: "5A3529"))
                         }
@@ -166,34 +173,37 @@ struct HomeContentView: View {
                     .padding(.top, 10)
                     
                     // Search Bar
-                    HStack {
-                        HStack {
+                    HStack(spacing: 12) {
+                        HStack(spacing: 12) {
                             Image(systemName: "magnifyingglass")
                                 .foregroundColor(.gray)
+                                .font(.system(size: 16))
                             
                             TextField("Search cafe..", text: $searchText)
                                 .textFieldStyle(PlainTextFieldStyle())
+                                .font(.subheadline)
                         }
-                        .padding(.horizontal, 15)
-                        .padding(.vertical, 12)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
                         .background(Color(.systemGray6))
                         .cornerRadius(25)
                         
                         Button(action: {
-                            // Filter
+                            // Filter action
                         }) {
                             Image(systemName: "slider.horizontal.3")
                                 .foregroundColor(.white)
-                                .padding(12)
+                                .font(.system(size: 16))
+                                .padding(14)
                                 .background(Color(hex: "5A3529"))
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                     }
                     .padding(.horizontal, 20)
                     
                     // Work Friendly Cafes Section
-                    VStack(alignment: .leading, spacing: 15) {
-                        HStack {
+                    VStack(alignment: .leading, spacing: 20) {
+                        HStack(alignment: .center) {
                             Text("Work Friendly Cafes")
                                 .font(.title2)
                                 .fontWeight(.semibold)
@@ -202,20 +212,23 @@ struct HomeContentView: View {
                             Spacer()
                             
                             Button("See All") {
-                                
+                                // See all action
                             }
-                            .foregroundColor(Color(hex: "5A3529"))
                             .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(Color(hex: "5A3529"))
                         }
                         .padding(.horizontal, 20)
                         
                         // Places Grid
                         LazyVGrid(columns: [
-                            GridItem(.flexible(), spacing: 10),
-                            GridItem(.flexible(), spacing: 10)
-                        ], spacing: 15) {
+                            GridItem(.flexible(), spacing: 8),
+                            GridItem(.flexible(), spacing: 8)
+                        ], spacing: 16) {
                             ForEach(filteredPlaces, id: \.id) { place in
-                                HomePlaceCard(place: place) {
+                                HomePlaceCard(place: place, onFavoriteChange: {
+                                    updateFavoriteCount()
+                                }) {
                                     selectedPlace = place
                                     showPlaceDetail = true
                                 }
@@ -234,11 +247,20 @@ struct HomeContentView: View {
             loadUserData()
             loadWorkFriendlyPlaces()
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            updateFavoriteCount()
+        }
         .sheet(isPresented: $showPlaceDetail) {
             if let place = selectedPlace {
                 PlaceDetailView(place: place)
             }
         }
+    }
+    
+    private func updateFavoriteCount() {
+        guard let user = Auth.auth().currentUser else { return }
+        let favorites = coreDataManager.fetchFavorites(for: user.uid)
+        favoriteCount = favorites.count
     }
     
     private func loadUserData() {
@@ -296,7 +318,7 @@ struct StatCard: View {
     let color: Color
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
             Text("\(number)")
                 .font(.title)
                 .fontWeight(.bold)
@@ -304,12 +326,16 @@ struct StatCard: View {
             
             Text(label)
                 .font(.subheadline)
+                .fontWeight(.medium)
                 .foregroundColor(.white.opacity(0.9))
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
-        .background(color)
-        .cornerRadius(15)
+        .padding(.vertical, 24)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(color)
+        )
+        .shadow(color: color.opacity(0.3), radius: 8, x: 0, y: 4)
     }
 }
 
@@ -337,7 +363,10 @@ struct FilterTag: View {
 
 struct HomePlaceCard: View {
     let place: PlaceData
+    let onFavoriteChange: () -> Void
     let onTap: () -> Void
+    @StateObject private var coreDataManager = CoreDataManager.shared
+    @State private var isFavorite = false
     
     var body: some View {
         Button(action: onTap) {
@@ -353,71 +382,124 @@ struct HomePlaceCard: View {
                         .overlay(
                             Image(systemName: "photo")
                                 .foregroundColor(.gray)
+                                .font(.system(size: 24))
                         )
                 }
-                .frame(height: 120)
+                .frame(height: 130)
                 .clipped()
                 .overlay(
                     VStack {
                         HStack {
                             Spacer()
                             Button(action: {
-                                // Toggle favorite
+                                toggleFavorite()
                             }) {
-                                Image(systemName: "heart")
-                                    .foregroundColor(.white)
-                                    .font(.system(size: 20))
-                                    .padding(8)
-                                    .background(Color.black.opacity(0.5))
-                                    .clipShape(Circle())
+                                Image(systemName: isFavorite ? "heart.fill" : "heart")
+                                    .foregroundColor(isFavorite ? .red : .white)
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .padding(10)
+                                    .background(
+                                        Circle()
+                                            .fill(Color.black.opacity(0.7))
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                            )
+                                    )
+                                    .scaleEffect(isFavorite ? 1.1 : 1.0)
+                                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isFavorite)
                             }
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        .padding(.top, 8)
-                        .padding(.trailing, 8)
+                        .padding(.top, 10)
+                        .padding(.trailing, 10)
                         Spacer()
                     }
                 )
                 
                 // Place Info
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 10) {
+                    // Place name with better spacing
                     Text(place.name)
                         .font(.headline)
+                        .fontWeight(.semibold)
                         .foregroundColor(.primary)
                         .lineLimit(1)
                     
+                    // Address with consistent styling
                     Text(place.address)
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                     
-                    HStack {
-                        HStack(spacing: 2) {
+                    // Rating and work-friendly indicator
+                    HStack(alignment: .center, spacing: 8) {
+                        HStack(spacing: 4) {
                             Image(systemName: "star.fill")
                                 .foregroundColor(.yellow)
-                                .font(.caption)
+                                .font(.system(size: 12))
                             Text(String(format: "%.1f", place.rating))
                                 .font(.caption)
+                                .fontWeight(.medium)
                                 .foregroundColor(.secondary)
                         }
                         
                         Spacer()
                         
-                        Image(systemName: "star.fill")
-                            .foregroundColor(Color(hex: "5A3529"))
-                            .font(.system(size: 16))
+                        // Work features indicators
+                        HStack(spacing: 6) {
+                            if place.hasWiFi {
+                                Image(systemName: "wifi")
+                                    .foregroundColor(Color(hex: "5A3529"))
+                                    .font(.system(size: 12))
+                            }
+                            
+                            if place.hasPowerOutlets {
+                                Image(systemName: "bolt.fill")
+                                    .foregroundColor(Color(hex: "5A3529"))
+                                    .font(.system(size: 12))
+                            }
+                            
+                            if place.isQuietZone {
+                                Image(systemName: "speaker.slash.fill")
+                                    .foregroundColor(Color(hex: "5A3529"))
+                                    .font(.system(size: 12))
+                            }
+                        }
                     }
                 }
-                .padding(12)
+                .padding(16)
             }
-            .background(Color.white)
-            .cornerRadius(15)
-            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+            .background(Color(.systemBackground))
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(PlainButtonStyle())
+        .onAppear {
+            checkFavoriteStatus()
+        }
+    }
+    
+    private func toggleFavorite() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        if isFavorite {
+            coreDataManager.removeFavorite(placeId: place.id, userId: userId)
+        } else {
+            coreDataManager.addFavorite(placeId: place.id, userId: userId)
+        }
+        isFavorite.toggle()
+        onFavoriteChange() // Update the favorite count in parent view
+    }
+    
+    private func checkFavoriteStatus() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        isFavorite = coreDataManager.isFavorite(placeId: place.id, userId: userId)
     }
 }
 
-// Extension to add fetchUserReviewCount
+// UserReviewCount
 extension FirebaseManager {
     func fetchUserReviewCount(for userId: String, completion: @escaping (Int) -> Void) {
   

@@ -34,6 +34,12 @@ struct PlaceDetailView: View {
         return reviews.reduce(0) { $0 + $1.foodTasteRating } / Double(reviews.count)
     }
     
+    // Computed property for overall rating based on all user reviews
+    var overallRating: Double {
+        guard !reviews.isEmpty else { return 0.0 }
+        return (averageQuietnessRating + averageWiFiRating + averageFoodRating) / 3.0
+    }
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -137,124 +143,164 @@ struct PlaceDetailView: View {
                             Text("Be the first to review this place!")
                                 .font(.body)
                                 .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
                         }
                         .padding(.vertical, 20)
                         .frame(maxWidth: .infinity)
                     } else {
-                        HStack(spacing: 30) {
-                            VStack {
-                                Text(String(format: "%.1f", averageQuietnessRating))
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                Text("Quietness")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
+                        VStack(spacing: 15) {
+                            Text("Average Ratings")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             
-                            VStack {
-                                Text(String(format: "%.1f", averageWiFiRating))
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                Text("WIFI Stability")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            VStack {
-                                Text(String(format: "%.1f", averageFoodRating))
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                Text("Food Taste")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                            HStack(spacing: 0) {
+                                VStack(spacing: 8) {
+                                    Text(String(format: "%.1f", averageQuietnessRating))
+                                        .font(.title2)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.primary)
+                                    Text("Quietness")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .multilineTextAlignment(.center)
+                                }
+                                .frame(maxWidth: .infinity)
+                                
+                                VStack(spacing: 8) {
+                                    Text(String(format: "%.1f", averageWiFiRating))
+                                        .font(.title2)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.primary)
+                                    Text("WIFI Stability")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .multilineTextAlignment(.center)
+                                }
+                                .frame(maxWidth: .infinity)
+                                
+                                VStack(spacing: 8) {
+                                    Text(String(format: "%.1f", averageFoodRating))
+                                        .font(.title2)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.primary)
+                                    Text("Food Taste")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .multilineTextAlignment(.center)
+                                }
+                                .frame(maxWidth: .infinity)
                             }
                         }
-                        .padding(.vertical, 10)
+                        .padding(.vertical, 15)
                     }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
                 
                 // Total Rating Card
-                VStack {
+                VStack(spacing: 0) {
                     HStack {
-                        VStack(alignment: .leading) {
+                        VStack(alignment: .leading, spacing: 8) {
                             Text("Total Rating")
                                 .font(.headline)
+                                .fontWeight(.semibold)
                                 .foregroundColor(.white)
                             
-                            HStack {
+                            HStack(spacing: 8) {
                                 Image(systemName: "star.fill")
                                     .foregroundColor(.yellow)
-                                Text(String(format: "%.1f", place.rating))
-                                    .font(.title)
+                                    .font(.title2)
+                                Text(String(format: "%.1f", reviews.isEmpty ? 0.0 : overallRating))
+                                    .font(.largeTitle)
                                     .fontWeight(.bold)
                                     .foregroundColor(.white)
                             }
                             
-                            Text("Based on \(reviews.count) review\(reviews.count == 1 ? "" : "s")")
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.8))
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Based on \(reviews.count) review\(reviews.count == 1 ? "" : "s")")
+                                    .font(.subheadline)
+                                    .foregroundColor(.white.opacity(0.9))
+                                
+                                if !reviews.isEmpty {
+                                    Text("Calculated from user ratings")
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.7))
+                                }
+                            }
                         }
                         Spacer()
                     }
-                    .padding(20)
-                    .background(Color.brown)
-                    .cornerRadius(15)
+                    .padding(24)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.brown)
+                    )
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
                 
                 // Reviews Section
-                VStack(alignment: .leading, spacing: 15) {
-                    HStack {
+                VStack(alignment: .leading, spacing: 20) {
+                    HStack(alignment: .center) {
                         Text("Reviews")
                             .font(.title2)
                             .fontWeight(.bold)
                         
                         Spacer()
                         
-                        Button("write Review") {
+                        Button("Write Review") {
                             showWriteReview = true
                         }
-                        .padding(.horizontal, 15)
-                        .padding(.vertical, 8)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
                         .background(Color.brown)
                         .foregroundColor(.white)
-                        .cornerRadius(20)
+                        .cornerRadius(22)
                     }
                     
                     // Recent Reviews
                     if reviews.isEmpty {
-                        VStack(spacing: 15) {
+                        VStack(spacing: 20) {
                             Image(systemName: "bubble.left.and.bubble.right")
-                                .font(.system(size: 40))
-                                .foregroundColor(.gray)
+                                .font(.system(size: 50))
+                                .foregroundColor(.gray.opacity(0.6))
                             
-                            Text("No reviews yet")
-                                .font(.headline)
-                                .foregroundColor(.gray)
-                            
-                            Text("Be the first to share your experience at \(place.name)!")
-                                .font(.body)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
+                            VStack(spacing: 8) {
+                                Text("No reviews yet")
+                                    .font(.title3)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.gray)
+                                
+                                Text("Be the first to share your experience at \(place.name)!")
+                                    .font(.body)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .lineLimit(2)
+                            }
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 30)
+                        .padding(.vertical, 40)
                     } else {
-                        ForEach(Array(reviews.prefix(3)), id: \.id) { review in
-                            ReviewRowView(review: review) { reviewToDelete in
-                                deleteReview(reviewToDelete)
+                        VStack(spacing: 16) {
+                            ForEach(Array(reviews.prefix(3)), id: \.id) { review in
+                                ReviewRowView(review: review) { reviewToDelete in
+                                    deleteReview(reviewToDelete)
+                                }
                             }
-                        }
-                        
-                        if reviews.count > 3 {
-                            Button("View All \(reviews.count) Reviews") {
-                                showAllReviews = true
+                            
+                            if reviews.count > 3 {
+                                Button("View All \(reviews.count) Reviews") {
+                                    showAllReviews = true
+                                }
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.brown)
+                                .padding(.top, 8)
+                                .frame(maxWidth: .infinity, alignment: .center)
                             }
-                            .foregroundColor(.brown)
-                            .padding(.top, 10)
                         }
                     }
                 }

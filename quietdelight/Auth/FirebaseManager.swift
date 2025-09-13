@@ -291,11 +291,22 @@ class FirebaseManager: ObservableObject {
     
     private func updatePlaceRating(placeId: String) {
         fetchReviews(for: placeId) { reviews in
-            let averageRating = reviews.reduce(0.0) { $0 + $1.rating } / Double(reviews.count)
+            guard !reviews.isEmpty else { return }
+            
+            // Calculate average ratings for each category
+            let averageQuietness = reviews.reduce(0.0) { $0 + $1.quietnessRating } / Double(reviews.count)
+            let averageWiFi = reviews.reduce(0.0) { $0 + $1.wifiStabilityRating } / Double(reviews.count)
+            let averageFood = reviews.reduce(0.0) { $0 + $1.foodTasteRating } / Double(reviews.count)
+            
+            // Calculate overall rating as average of the three categories
+            let overallRating = (averageQuietness + averageWiFi + averageFood) / 3.0
             
             self.db.collection("places").document(placeId).updateData([
-                "rating": averageRating,
-                "reviewCount": reviews.count
+                "rating": overallRating,
+                "reviewCount": reviews.count,
+                "averageQuietness": averageQuietness,
+                "averageWiFi": averageWiFi,
+                "averageFood": averageFood
             ])
         }
     }
