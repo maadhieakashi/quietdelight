@@ -48,7 +48,7 @@ struct OnboardingView: View {
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
                 .animation(.easeInOut, value: currentPage)
                 
-                // Custom page indicator
+               
                 VStack {
                     Spacer()
                     pageIndicator
@@ -71,7 +71,7 @@ struct OnboardingView: View {
                 }
             }
             .navigationBarHidden(true)
-            // Modern navigation using navigationDestination
+            
             .navigationDestination(isPresented: $navigateToHome) {
                 TabBarView()
                     .navigationBarBackButtonHidden(true)
@@ -85,7 +85,7 @@ struct OnboardingView: View {
     
     private var decorativeBackground: some View {
         ZStack {
-            // Top decorative circles
+            // Top decorative
             Circle()
                 .fill(Color(hex: "5A3529").opacity(0.5))
                 .frame(width: 120, height: 120)
@@ -117,11 +117,12 @@ struct OnboardingView: View {
     }
     
     private func completeOnboarding() {
-        // Mark onboarding as complete first
+     
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+        UserDefaults.standard.set(false, forKey: "isNewUser")
         UserDefaults.standard.synchronize()
         
-        // Save profile image if selected
+        // Save profile image
         if let image = profileImage {
             authManager.updateProfileWithImage(image) { result in
                 DispatchQueue.main.async {
@@ -131,16 +132,17 @@ struct OnboardingView: View {
                     case .failure(let error):
                         print("Failed to save profile image: \(error.localizedDescription)")
                     }
-                    // Navigate to home
+                    
                     self.navigateToHome = true
                 }
             }
         } else {
-            // No image to save, just navigate to home
+          
             navigateToHome = true
         }
+        }
     }
-}
+
 
 //Profile Pic Screen
 struct ProfilePictureScreen: View {

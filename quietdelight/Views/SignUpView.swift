@@ -5,6 +5,7 @@
 //  Created by SAHimeshi 002 on 2025-08-20.
 //
 
+
 import SwiftUI
 
 struct SignUpView: View {
@@ -34,12 +35,8 @@ struct SignUpView: View {
             }
         }
         .animation(.none, value: showSignIn)
-        .alert("Sign Up", isPresented: $showAlert) {
-            Button("OK") {
-                if signUpSuccess {
-                    showSignIn = true
-                }
-            }
+        .alert(signUpSuccess ? "Success" : "Sign Up Error", isPresented: $showAlert) {
+            Button("OK") { }
         } message: {
             Text(errorMessage)
         }
@@ -72,9 +69,9 @@ struct SignUpView: View {
     .fill(Color.clear)
     .frame(height: 50)
         
-    // Logo and title section
+    // Logo and title
     VStack(spacing: 16) {
-    // Coffee cup logo
+    //logo
     Image(systemName: "cup.and.saucer.fill")
     .font(.system(size: 40))
     .foregroundColor(.white)
@@ -320,14 +317,14 @@ HStack {
         
         // Basic validation check
         if username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            print(" Validation failed: Empty username")
+            print("Validation failed: Empty username")
             errorMessage = "Please enter a username."
             showAlert = true
             return
         }
         
         if email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            print(" Validation failed: Empty email")
+            print("Validation failed: Empty email")
             errorMessage = "Please enter an email address."
             showAlert = true
             return
@@ -341,7 +338,7 @@ HStack {
         }
         
         if newPassword != confirmPassword {
-            print(" Validation failed: Passwords don't match")
+            print("Validation failed: Passwords don't match")
             errorMessage = "Passwords don't match."
             showAlert = true
             return
@@ -366,11 +363,15 @@ HStack {
             sendUpdates: sendUpdates,
             agreeToTerms: agreeToTerms
         ) { result in
-            print("=== SIGNUP RESULT ===")
+            print("-- SIGNUP RESULT --")
             switch result {
             case .success(let message):
                 print("Success: \(message)")
                 signUpSuccess = true
+                // Set a flag to indicate this is a new user
+                UserDefaults.standard.set(true, forKey: "isNewUser")
+                UserDefaults.standard.synchronize()
+                // Show success message only, no navigation
                 errorMessage = message
                 showAlert = true
             case .failure(let error):
@@ -379,7 +380,7 @@ HStack {
                 errorMessage = error
                 showAlert = true
             }
-            print("====================")
+            print("-----")
         }
     }
 }

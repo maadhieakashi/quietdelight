@@ -22,7 +22,20 @@ struct quietdelightApp: App {
                     if authManager.isLoading {
                         SplashView()
                     } else if authManager.isAuthenticated {
-                        TabBarView()
+                        
+                        let isNewUser = UserDefaults.standard.bool(forKey: "isNewUser")
+                        let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+                        
+                        if isNewUser && !hasCompletedOnboarding {
+                            
+                            OnboardingView()
+                        } else if hasCompletedOnboarding {
+                          
+                            TabBarView()
+                        } else {
+                          
+                            TabBarView()
+                        }
                     } else {
                         SigninView()
                     }
