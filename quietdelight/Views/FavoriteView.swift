@@ -30,7 +30,7 @@ struct FavoriteView: View {
         
         switch selectedFilter {
         case "Nearby":
-            // Sort by distance (implement location-based sorting)
+            // Sort by distance
             return places
         case "recent":
             // Sort by recently added to favorites
@@ -57,7 +57,7 @@ struct FavoriteView: View {
                     .cornerRadius(25)
                     
                     Button(action: {
-                        // TODO: Implement filter functionality
+                      
                     }) {
                         Image(systemName: "slider.horizontal.3")
                             .foregroundColor(.white)
@@ -147,24 +147,35 @@ struct FavoriteView: View {
     }
     
     private func loadFavorites() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
+        guard let userId = Auth.auth().currentUser?.uid else {
+            print("No user ID available for loading favorites")
+            return
+        }
         
-        // Sync with Firebase first
+        print("Loading favorites for user: \(userId)")
+        
+        
         firebaseManager.syncFavorites(for: userId)
         
         // Get favorites from Core Data
         let favoritePlaces = coreDataManager.fetchFavorites(for: userId)
+        print("Found \(favoritePlaces.count) favorite places in Core Data")
         
-        // Fetch place details for each favorite
+        
         var places: [(place: PlaceData, favoritedAt: Date)] = []
         for favorite in favoritePlaces {
-            guard let placeId = favorite.placeId else { continue }
+            guard let placeId = favorite.placeId else {
+                print("Skipping favorite with no place ID")
+                continue
+            }
             let favoritedAt = favorite.createdAt ?? Date()
+            print("Processing favorite place ID: \(placeId)")
             
-          
+            // First check Core Data
             let coreDataPlaces = coreDataManager.fetchPlaces()
             if let existingPlace = coreDataPlaces.first(where: { $0.id == placeId }) {
-                // Fetch real-time rating from reviews
+                print("Found place in Core Data: \(existingPlace.name ?? "Unknown") - Image URL: '\(existingPlace.imageURL ?? "")'")
+        
                 fetchRealTimeRating(for: placeId) { realRating in
                     let place = PlaceData(
                         id: existingPlace.id ?? "",
@@ -178,7 +189,8 @@ struct FavoriteView: View {
                         isWorkFriendly: existingPlace.isWorkFriendly,
                         hasWiFi: existingPlace.hasWiFi,
                         hasPowerOutlets: existingPlace.hasPowerOutlets,
-                        isQuietZone: existingPlace.isQuietZone
+                        isQuietZone: existingPlace.isQuietZone,
+                        venueType: PlaceData.determineVenueType(from: existingPlace.name ?? "")
                     )
                     
                     DispatchQueue.main.async {
@@ -187,16 +199,25 @@ struct FavoriteView: View {
                         } else {
                             self.favoriteePlaces.append((place: place, favoritedAt: favoritedAt))
                         }
+                        print("Added/Updated favorite: \(place.name) with image URL: '\(place.imageURL)'")
                     }
                 }
             } else {
+                print("Place not found in Core Data, fetching from Firebase: \(placeId)")
                
                 firebaseManager.db.collection("places").document(placeId).getDocument { document, error in
+                    if let error = error {
+                        print("Error fetching place from Firebase: \(error.localizedDescription)")
+                        return
+                    }
+                    
                     if let document = document, document.exists, let data = document.data() {
                         let venueTypeString = data["venueType"] as? String
                         let venueType = VenueType(rawValue: venueTypeString ?? "") ?? .cafe
+                        let imageURL = data["imageURL"] as? String ?? ""
+                        print("Found place in Firebase: \(data["name"] as? String ?? "Unknown") - Image URL: '\(imageURL)'")
                         
-                        // Fetch real-time rating from reviews
+                        // rating from reviews
                         self.fetchRealTimeRating(for: placeId) { realRating in
                             let place = PlaceData(
                                 id: document.documentID,
@@ -205,7 +226,7 @@ struct FavoriteView: View {
                                 latitude: data["latitude"] as? Double ?? 0.0,
                                 longitude: data["longitude"] as? Double ?? 0.0,
                                 rating: realRating,
-                                imageURL: data["imageURL"] as? String ?? "",
+                                imageURL: imageURL,
                                 description: data["description"] as? String ?? "",
                                 isWorkFriendly: data["isWorkFriendly"] as? Bool ?? false,
                                 hasWiFi: data["hasWiFi"] as? Bool ?? false,
@@ -217,9 +238,12 @@ struct FavoriteView: View {
                             DispatchQueue.main.async {
                                 if !self.favoriteePlaces.contains(where: { $0.place.id == place.id }) {
                                     self.favoriteePlaces.append((place: place, favoritedAt: favoritedAt))
+                                    print("Added favorite from Firebase: \(place.name) with image URL: '\(place.imageURL)'")
                                 }
                             }
                         }
+                    } else {
+                        print("Document does not exist for place ID: \(placeId)")
                     }
                 }
             }
@@ -227,6 +251,7 @@ struct FavoriteView: View {
         
         DispatchQueue.main.async {
             self.favoriteePlaces = places
+            print("Initial favorites loaded: \(places.count) places")
         }
     }
     
@@ -237,7 +262,7 @@ struct FavoriteView: View {
                 return
             }
             
-            // Calculate average rating from reviews using the same logic as updatePlaceRating
+            // Calculate average rating
             let averageQuietness = reviews.reduce(0.0) { $0 + $1.quietnessRating } / Double(reviews.count)
             let averageWiFi = reviews.reduce(0.0) { $0 + $1.wifiStabilityRating } / Double(reviews.count)
             let averageFood = reviews.reduce(0.0) { $0 + $1.foodTasteRating } / Double(reviews.count)
@@ -254,6 +279,16 @@ struct FavoriteView: View {
         
         favoriteePlaces.removeAll { $0.place.id == place.id }
     }
+    
+    // Helper function to validate image URL
+    private func isValidImageURL(_ urlString: String) -> Bool {
+        guard !urlString.isEmpty,
+              let url = URL(string: urlString),
+              url.scheme == "http" || url.scheme == "https" else {
+            return false
+        }
+        return true
+    }
 }
 
 struct FavoritePlaceCard: View {
@@ -262,24 +297,87 @@ struct FavoritePlaceCard: View {
     let onTap: () -> Void
     let onRemoveFavorite: () -> Void
     
+    // Helper function to validate image URL
+    private func isValidImageURL(_ urlString: String) -> Bool {
+        guard !urlString.isEmpty,
+              let url = URL(string: urlString),
+              url.scheme == "http" || url.scheme == "https" else {
+            return false
+        }
+        return true
+    }
+    
     var body: some View {
         Button(action: onTap) {
             VStack(spacing: 0) {
                 HStack {
-                    AsyncImage(url: URL(string: place.imageURL)) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.3))
-                            .overlay(
-                                Image(systemName: "photo")
-                                    .foregroundColor(.gray)
-                            )
+                    AsyncImage(url: URL(string: place.imageURL)) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 80, height: 80)
+                                .clipped()
+                        case .failure(let error):
+                        
+                            Image("cafe")
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 80, height: 80)
+                                .clipped()
+                                .opacity(0.9)
+                                .onAppear {
+                                    print("Failed to load image for \(place.name): \(error.localizedDescription)")
+                                    print("Image URL: '\(place.imageURL)'")
+                                    print("Using fallback local image")
+                                }
+                        case .empty:
+                            if place.imageURL.isEmpty || !isValidImageURL(place.imageURL) {
+                             
+                                Image("cafe")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 80, height: 80)
+                                    .clipped()
+                                    .opacity(0.9)
+                                    .onAppear {
+                                        print("Using fallback image for \(place.name) - Invalid URL: '\(place.imageURL)'")
+                                    }
+                            } else {
+                           
+                                Rectangle()
+                                    .fill(Color.gray.opacity(0.1))
+                                    .overlay(
+                                        VStack(spacing: 4) {
+                                            ProgressView()
+                                                .scaleEffect(0.7)
+                                                .progressViewStyle(CircularProgressViewStyle(tint: .gray))
+                                            Text("Loading...")
+                                                .font(.caption2)
+                                                .foregroundColor(.gray)
+                                        }
+                                    )
+                                    .frame(width: 80, height: 80)
+                                    .onAppear {
+                                        print("Loading image for \(place.name): \(place.imageURL)")
+                                    }
+                            }
+                        @unknown default:
+                            Image("cafe")
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 80, height: 80)
+                                .clipped()
+                                .opacity(0.9)
+                        }
                     }
-                    .frame(width: 80, height: 80)
                     .cornerRadius(10)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                    )
+                    .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
                     
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
