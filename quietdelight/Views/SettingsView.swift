@@ -91,11 +91,11 @@ struct SettingsView: View {
                                 Divider()
                                     .padding(.leading, 52)
                             
-                                // Reviews Row
+                                // PlaceList Row
                                 SettingsMenuRow(
-                                    icon: "star.square",
-                                    title: "Reviews",
-                                    subtitle: "Share your cafe experiences"
+                                    icon: "fork.knife",
+                                    title: "Places listings",
+                                    subtitle: "Get  experiences about the places"
                                 )
                             }
                             .background(Color.white)
