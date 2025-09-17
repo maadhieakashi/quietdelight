@@ -350,6 +350,12 @@ struct FavoritePlaceCard: View {
     let onTap: () -> Void
     let onRemoveFavorite: () -> Void
     
+    @StateObject private var firebaseManager = FirebaseManager.shared
+    @State private var reviewRatings: (quietness: Double, wifi: Double, food: Double) = (0.0, 0.0, 0.0)
+    @State private var reviewCount = 0
+    @State private var powerOutletStatus = "Available"
+    @State private var workFeatures: [String] = []
+    
     private func isValidImageURL(_ urlString: String) -> Bool {
         guard !urlString.isEmpty else { return false }
         guard let url = URL(string: urlString) else { return false }
@@ -376,7 +382,7 @@ struct FavoritePlaceCard: View {
     var body: some View {
         Button(action: onTap) {
             VStack(spacing: 0) {
-                HStack {
+                HStack(spacing: 15) {
                     AsyncImage(url: URL(string: place.imageURL)) { phase in
                         switch phase {
                         case .success(let image):
@@ -436,32 +442,74 @@ struct FavoritePlaceCard: View {
                             Text(place.name)
                                 .font(.headline)
                                 .foregroundColor(.primary)
+                                .lineLimit(1)
                             
                             Spacer()
                             
                             Button(action: onRemoveFavorite) {
                                 Image(systemName: "heart.fill")
                                     .foregroundColor(.red)
-                                    .font(.system(size: 20))
+                                    .font(.system(size: 18))
                             }
                         }
                         
                         Text(place.address)
                             .font(.caption)
                             .foregroundColor(.secondary)
-                            .lineLimit(1)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
                         
                         // Feature tags
                         HStack(spacing: 5) {
-                            if place.hasWiFi {
-                                FeatureTag(text: "Fast WiFi")
+                            ForEach(workFeatures.prefix(3), id: \.self) { feature in
+                                FeatureTag(text: feature)
                             }
-                            if place.isQuietZone {
-                                FeatureTag(text: "Quiet Zone")
+                        }
+                        
+                        // Rating
+                        HStack(spacing: 12) {
+                            // Real review ratings
+                            if reviewCount > 0 {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(String(format: "%.1f", reviewRatings.wifi))
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                    Text("WiFi")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(String(format: "%.1f", reviewRatings.quietness))
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                    Text("Quiet")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(String(format: "%.1f", reviewRatings.food))
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                    Text("Food")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                            } else {
+                                // Show basic features when no reviews
+                                if place.hasWiFi {
+                                    FeatureTag(text: "WiFi")
+                                }
+                                if place.isQuietZone {
+                                    FeatureTag(text: "Quiet Zone")
+                                }
+                                if place.hasPowerOutlets {
+                                    FeatureTag(text: "Power Outlet")
+                                }
                             }
-                            if place.hasPowerOutlets {
-                                FeatureTag(text: "Power Outlet")
-                            }
+                            
+                            Spacer()
                         }
                         
                         HStack {
@@ -477,6 +525,12 @@ struct FavoritePlaceCard: View {
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             
+                            if reviewCount > 0 {
+                                Text("(\(reviewCount) review\(reviewCount == 1 ? "" : "s"))")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                            
                             Spacer()
                             
                             Text("saved \(timeAgoString(from: favoritedAt))")
@@ -485,7 +539,7 @@ struct FavoritePlaceCard: View {
                         }
                     }
                     
-                    Spacer()
+         
                 }
                 .padding(15)
                 .background(Color.white)
@@ -494,6 +548,75 @@ struct FavoritePlaceCard: View {
             }
         }
         .buttonStyle(PlainButtonStyle())
+        .onAppear {
+            loadRealReviewData()
+        }
+    }
+    
+    private func loadRealReviewData() {
+        firebaseManager.fetchReviews(for: place.id) { reviews in
+            DispatchQueue.main.async {
+                self.reviewCount = reviews.count
+                
+                guard !reviews.isEmpty else {
+                    // No reviews
+                    self.reviewRatings = (0.0, 0.0, 0.0)
+                    self.workFeatures = []
+                    self.powerOutletStatus = "Available"
+                    return
+                }
+                
+                //  average ratings for each category
+                let avgQuietness = reviews.reduce(0.0) { $0 + $1.quietnessRating } / Double(reviews.count)
+                let avgWiFi = reviews.reduce(0.0) { $0 + $1.wifiStabilityRating } / Double(reviews.count)
+                let avgFood = reviews.reduce(0.0) { $0 + $1.foodTasteRating } / Double(reviews.count)
+                
+                self.reviewRatings = (avgQuietness, avgWiFi, avgFood)
+                
+                // Determine work features based on review ratings
+                var features: [String] = []
+                
+                if avgWiFi >= 4.0 {
+                    features.append("Fast WiFi")
+                } else if avgWiFi >= 3.0 {
+                    features.append("WiFi Available")
+                }
+                
+                if avgQuietness >= 4.0 {
+                    features.append("Quiet Zone")
+                } else if avgQuietness >= 3.0 {
+                    features.append("Moderate Noise")
+                }
+                
+                if avgFood >= 4.0 {
+                    features.append("Great Food")
+                } else if avgFood >= 3.0 {
+                    features.append("Good Food")
+                }
+                
+                // Calculate power outlet status based on reviews
+                let abundantCount = reviews.filter { $0.powerOutletStatus == "Abundant" }.count
+                let limitedCount = reviews.filter { $0.powerOutletStatus == "Limited" }.count
+                let notAvailableCount = reviews.filter { $0.powerOutletStatus == "Not Available" }.count
+                
+                if abundantCount > limitedCount && abundantCount > notAvailableCount {
+                    self.powerOutletStatus = "Abundant"
+                    features.append("Power Outlets")
+                } else if limitedCount > abundantCount && limitedCount > notAvailableCount {
+                    self.powerOutletStatus = "Limited"
+                    features.append("Limited Power")
+                } else if notAvailableCount > abundantCount && notAvailableCount > limitedCount {
+                    self.powerOutletStatus = "Not Available"
+                } else {
+                    self.powerOutletStatus = "Available"
+                    if place.hasPowerOutlets {
+                        features.append("Power Outlets")
+                    }
+                }
+                
+                self.workFeatures = features
+            }
+        }
     }
 }
 

@@ -139,6 +139,10 @@ struct PlacesListView: View {
 struct PlaceListCard: View {
     let place: PlaceData
     let onTap: () -> Void
+    @StateObject private var firebaseManager = FirebaseManager.shared
+    @State private var reviewRatings: (quietness: Double, wifi: Double, food: Double) = (0.0, 0.0, 0.0)
+    @State private var reviewCount = 0
+    @State private var powerOutletStatus = "Available"
     
     var body: some View {
         Button(action: onTap) {
@@ -200,7 +204,7 @@ struct PlaceListCard: View {
                     // Rating breakdown
                     HStack(spacing: 20) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("4.7")
+                            Text(reviewRatings.wifi > 0 ? String(format: "%.1f", reviewRatings.wifi) : "--")
                                 .font(.caption)
                                 .fontWeight(.semibold)
                             Text("WiFi")
@@ -209,7 +213,7 @@ struct PlaceListCard: View {
                         }
                         
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("3.0")
+                            Text(reviewRatings.quietness > 0 ? String(format: "%.1f", reviewRatings.quietness) : "--")
                                 .font(.caption)
                                 .fontWeight(.semibold)
                             Text("Quiet")
@@ -218,7 +222,7 @@ struct PlaceListCard: View {
                         }
                         
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("4.5")
+                            Text(reviewRatings.food > 0 ? String(format: "%.1f", reviewRatings.food) : "--")
                                 .font(.caption)
                                 .fontWeight(.semibold)
                             Text("Food")
@@ -230,10 +234,14 @@ struct PlaceListCard: View {
                         
                         if place.hasPowerOutlets {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Abundant")
+                                Text(powerOutletStatus)
                                     .font(.caption)
                                     .fontWeight(.semibold)
-                                    .foregroundColor(.green)
+                                    .foregroundColor(
+                                        powerOutletStatus == "Abundant" ? .green :
+                                        powerOutletStatus == "Limited" ? .orange :
+                                        powerOutletStatus == "Not Available" ? .red : .green
+                                    )
                                 Text("Power")
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
@@ -248,6 +256,45 @@ struct PlaceListCard: View {
             .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
         }
         .buttonStyle(PlainButtonStyle())
+        .onAppear {
+            loadRealRatings()
+        }
+    }
+    
+    private func loadRealRatings() {
+        firebaseManager.fetchReviews(for: place.id) { reviews in
+            DispatchQueue.main.async {
+                self.reviewCount = reviews.count
+                
+                guard !reviews.isEmpty else {
+                    self.reviewRatings = (0.0, 0.0, 0.0)
+                    self.powerOutletStatus = "Available" // Default when no reviews
+                    return
+                }
+                
+                // Calculate average ratings for each category
+                let avgQuietness = reviews.reduce(0.0) { $0 + $1.quietnessRating } / Double(reviews.count)
+                let avgWiFi = reviews.reduce(0.0) { $0 + $1.wifiStabilityRating } / Double(reviews.count)
+                let avgFood = reviews.reduce(0.0) { $0 + $1.foodTasteRating } / Double(reviews.count)
+                
+                self.reviewRatings = (avgQuietness, avgWiFi, avgFood)
+                
+                // Calculate power outlet status based on reviews
+                let abundantCount = reviews.filter { $0.powerOutletStatus == "Abundant" }.count
+                let limitedCount = reviews.filter { $0.powerOutletStatus == "Limited" }.count
+                let notAvailableCount = reviews.filter { $0.powerOutletStatus == "Not Available" }.count
+                
+                if abundantCount > limitedCount && abundantCount > notAvailableCount {
+                    self.powerOutletStatus = "Abundant"
+                } else if limitedCount > abundantCount && limitedCount > notAvailableCount {
+                    self.powerOutletStatus = "Limited"
+                } else if notAvailableCount > abundantCount && notAvailableCount > limitedCount {
+                    self.powerOutletStatus = "Not Available"
+                } else {
+                    self.powerOutletStatus = "Available" // Default when tied
+                }
+            }
+        }
     }
 }
 

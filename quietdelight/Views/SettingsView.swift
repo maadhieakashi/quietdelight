@@ -92,11 +92,15 @@ struct SettingsView: View {
                                     .padding(.leading, 52)
                             
                                 // PlaceList Row
-                                SettingsMenuRow(
-                                    icon: "fork.knife",
-                                    title: "Places listings",
-                                    subtitle: "Get  experiences about the places"
-                                )
+                                NavigationLink(destination: PlacesListView()) {
+                                    
+                                    SettingsMenuRow(
+                                        icon: "fork.knife",
+                                        title: "Places listings",
+                                        subtitle: "Get  experiences about the places"
+                                    )
+                                }
+                                
                             }
                             .background(Color.white)
                             .cornerRadius(12)
