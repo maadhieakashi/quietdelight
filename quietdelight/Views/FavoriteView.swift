@@ -55,16 +55,6 @@ struct FavoriteView: View {
                     .padding(.vertical, 10)
                     .background(Color(.systemGray6))
                     .cornerRadius(25)
-                    
-                    Button(action: {
-                      
-                    }) {
-                        Image(systemName: "slider.horizontal.3")
-                            .foregroundColor(.white)
-                            .padding(10)
-                            .background(Color.brown)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 10)
@@ -148,66 +138,121 @@ struct FavoriteView: View {
     
     private func loadFavorites() {
         guard let userId = Auth.auth().currentUser?.uid else {
-            print("No user ID available for loading favorites")
             return
         }
-        
-        print("Loading favorites for user: \(userId)")
-        
         
         firebaseManager.syncFavorites(for: userId)
         
         // Get favorites from Core Data
         let favoritePlaces = coreDataManager.fetchFavorites(for: userId)
-        print("Found \(favoritePlaces.count) favorite places in Core Data")
         
+     
+        DispatchQueue.main.async {
+            self.favoriteePlaces.removeAll()
+        }
         
         var places: [(place: PlaceData, favoritedAt: Date)] = []
         for favorite in favoritePlaces {
             guard let placeId = favorite.placeId else {
-                print("Skipping favorite with no place ID")
                 continue
             }
             let favoritedAt = favorite.createdAt ?? Date()
-            print("Processing favorite place ID: \(placeId)")
             
             // First check Core Data
             let coreDataPlaces = coreDataManager.fetchPlaces()
             if let existingPlace = coreDataPlaces.first(where: { $0.id == placeId }) {
-                print("Found place in Core Data: \(existingPlace.name ?? "Unknown") - Image URL: '\(existingPlace.imageURL ?? "")'")
-        
-                fetchRealTimeRating(for: placeId) { realRating in
-                    let place = PlaceData(
-                        id: existingPlace.id ?? "",
-                        name: existingPlace.name ?? "",
-                        address: existingPlace.address ?? "",
-                        latitude: existingPlace.latitude,
-                        longitude: existingPlace.longitude,
-                        rating: realRating,
-                        imageURL: existingPlace.imageURL ?? "",
-                        description: existingPlace.placeDescription ?? "",
-                        isWorkFriendly: existingPlace.isWorkFriendly,
-                        hasWiFi: existingPlace.hasWiFi,
-                        hasPowerOutlets: existingPlace.hasPowerOutlets,
-                        isQuietZone: existingPlace.isQuietZone,
-                        venueType: PlaceData.determineVenueType(from: existingPlace.name ?? "")
-                    )
-                    
-                    DispatchQueue.main.async {
-                        if let index = self.favoriteePlaces.firstIndex(where: { $0.place.id == placeId }) {
-                            self.favoriteePlaces[index] = (place: place, favoritedAt: favoritedAt)
+                let imageURL = existingPlace.imageURL ?? ""
+                
+                if imageURL.isEmpty {
+                    firebaseManager.db.collection("places").document(placeId).getDocument { document, error in
+                        if let document = document, document.exists, let data = document.data() {
+                            let firebaseImageURL = data["imageURL"] as? String ?? ""
+                            
+                            self.fetchRealTimeRating(for: placeId) { realRating in
+                                let place = PlaceData(
+                                    id: existingPlace.id ?? "",
+                                    name: existingPlace.name ?? "",
+                                    address: existingPlace.address ?? "",
+                                    latitude: existingPlace.latitude,
+                                    longitude: existingPlace.longitude,
+                                    rating: realRating,
+                                    imageURL: firebaseImageURL.isEmpty ? imageURL : firebaseImageURL,
+                                    description: existingPlace.placeDescription ?? "",
+                                    isWorkFriendly: existingPlace.isWorkFriendly,
+                                    hasWiFi: existingPlace.hasWiFi,
+                                    hasPowerOutlets: existingPlace.hasPowerOutlets,
+                                    isQuietZone: existingPlace.isQuietZone,
+                                    venueType: PlaceData.determineVenueType(from: existingPlace.name ?? "")
+                                )
+                                
+                                DispatchQueue.main.async {
+                                    if let index = self.favoriteePlaces.firstIndex(where: { $0.place.id == placeId }) {
+                                        self.favoriteePlaces[index] = (place: place, favoritedAt: favoritedAt)
+                                    } else {
+                                        self.favoriteePlaces.append((place: place, favoritedAt: favoritedAt))
+                                    }
+                                }
+                            }
                         } else {
-                            self.favoriteePlaces.append((place: place, favoritedAt: favoritedAt))
+                           
+                            self.fetchRealTimeRating(for: placeId) { realRating in
+                                let place = PlaceData(
+                                    id: existingPlace.id ?? "",
+                                    name: existingPlace.name ?? "",
+                                    address: existingPlace.address ?? "",
+                                    latitude: existingPlace.latitude,
+                                    longitude: existingPlace.longitude,
+                                    rating: realRating,
+                                    imageURL: imageURL,
+                                    description: existingPlace.placeDescription ?? "",
+                                    isWorkFriendly: existingPlace.isWorkFriendly,
+                                    hasWiFi: existingPlace.hasWiFi,
+                                    hasPowerOutlets: existingPlace.hasPowerOutlets,
+                                    isQuietZone: existingPlace.isQuietZone,
+                                    venueType: PlaceData.determineVenueType(from: existingPlace.name ?? "")
+                                )
+                                
+                                DispatchQueue.main.async {
+                                    if let index = self.favoriteePlaces.firstIndex(where: { $0.place.id == placeId }) {
+                                        self.favoriteePlaces[index] = (place: place, favoritedAt: favoritedAt)
+                                    } else {
+                                        self.favoriteePlaces.append((place: place, favoritedAt: favoritedAt))
+                                    }
+                                }
+                            }
                         }
-                        print("Added/Updated favorite: \(place.name) with image URL: '\(place.imageURL)'")
+                    }
+                } else {
+                    // Core Data has image URL, use it directly
+                    fetchRealTimeRating(for: placeId) { realRating in
+                        let place = PlaceData(
+                            id: existingPlace.id ?? "",
+                            name: existingPlace.name ?? "",
+                            address: existingPlace.address ?? "",
+                            latitude: existingPlace.latitude,
+                            longitude: existingPlace.longitude,
+                            rating: realRating,
+                            imageURL: imageURL,
+                            description: existingPlace.placeDescription ?? "",
+                            isWorkFriendly: existingPlace.isWorkFriendly,
+                            hasWiFi: existingPlace.hasWiFi,
+                            hasPowerOutlets: existingPlace.hasPowerOutlets,
+                            isQuietZone: existingPlace.isQuietZone,
+                            venueType: PlaceData.determineVenueType(from: existingPlace.name ?? "")
+                        )
+                        
+                        DispatchQueue.main.async {
+                            if let index = self.favoriteePlaces.firstIndex(where: { $0.place.id == placeId }) {
+                                self.favoriteePlaces[index] = (place: place, favoritedAt: favoritedAt)
+                            } else {
+                                self.favoriteePlaces.append((place: place, favoritedAt: favoritedAt))
+                            }
+                        }
                     }
                 }
             } else {
-                print("Place not found in Core Data, fetching from Firebase: \(placeId)")
-               
                 firebaseManager.db.collection("places").document(placeId).getDocument { document, error in
                     if let error = error {
-                        print("Error fetching place from Firebase: \(error.localizedDescription)")
                         return
                     }
                     
@@ -215,13 +260,13 @@ struct FavoriteView: View {
                         let venueTypeString = data["venueType"] as? String
                         let venueType = VenueType(rawValue: venueTypeString ?? "") ?? .cafe
                         let imageURL = data["imageURL"] as? String ?? ""
-                        print("Found place in Firebase: \(data["name"] as? String ?? "Unknown") - Image URL: '\(imageURL)'")
+                        let placeName = data["name"] as? String ?? "Unknown"
                         
                         // rating from reviews
                         self.fetchRealTimeRating(for: placeId) { realRating in
                             let place = PlaceData(
                                 id: document.documentID,
-                                name: data["name"] as? String ?? "",
+                                name: placeName,
                                 address: data["address"] as? String ?? "",
                                 latitude: data["latitude"] as? Double ?? 0.0,
                                 longitude: data["longitude"] as? Double ?? 0.0,
@@ -238,12 +283,9 @@ struct FavoriteView: View {
                             DispatchQueue.main.async {
                                 if !self.favoriteePlaces.contains(where: { $0.place.id == place.id }) {
                                     self.favoriteePlaces.append((place: place, favoritedAt: favoritedAt))
-                                    print("Added favorite from Firebase: \(place.name) with image URL: '\(place.imageURL)'")
                                 }
                             }
                         }
-                    } else {
-                        print("Document does not exist for place ID: \(placeId)")
                     }
                 }
             }
@@ -251,7 +293,6 @@ struct FavoriteView: View {
         
         DispatchQueue.main.async {
             self.favoriteePlaces = places
-            print("Initial favorites loaded: \(places.count) places")
         }
     }
     
@@ -267,7 +308,7 @@ struct FavoriteView: View {
             let averageWiFi = reviews.reduce(0.0) { $0 + $1.wifiStabilityRating } / Double(reviews.count)
             let averageFood = reviews.reduce(0.0) { $0 + $1.foodTasteRating } / Double(reviews.count)
             
-            // Calculate overall rating as average of the three categories
+            // Calculate overall rating
             let overallRating = (averageQuietness + averageWiFi + averageFood) / 3.0
             completion(overallRating)
         }
@@ -280,14 +321,26 @@ struct FavoriteView: View {
         favoriteePlaces.removeAll { $0.place.id == place.id }
     }
     
-    // Helper function to validate image URL
     private func isValidImageURL(_ urlString: String) -> Bool {
-        guard !urlString.isEmpty,
-              let url = URL(string: urlString),
-              url.scheme == "http" || url.scheme == "https" else {
-            return false
-        }
-        return true
+        guard !urlString.isEmpty else { return false }
+        guard let url = URL(string: urlString) else { return false }
+        guard let scheme = url.scheme?.lowercased(),
+              scheme == "http" || scheme == "https" else { return false }
+        guard let host = url.host, !host.isEmpty else { return false }
+        
+        let validHosts = [
+            "firebasestorage.googleapis.com",
+            "storage.googleapis.com",
+            "firebase.google.com",
+            "images.unsplash.com",
+            "via.placeholder.com",
+            "picsum.photos"
+        ]
+        
+        let hasValidHost = validHosts.contains { host.contains($0) }
+        let hasImageExtension = urlString.lowercased().range(of: "\\.(jpg|jpeg|png|gif|webp|bmp)", options: .regularExpression) != nil ||
+                               urlString.contains("alt=media")
+        return hasValidHost || hasImageExtension
     }
 }
 
@@ -297,14 +350,27 @@ struct FavoritePlaceCard: View {
     let onTap: () -> Void
     let onRemoveFavorite: () -> Void
     
-    // Helper function to validate image URL
     private func isValidImageURL(_ urlString: String) -> Bool {
-        guard !urlString.isEmpty,
-              let url = URL(string: urlString),
-              url.scheme == "http" || url.scheme == "https" else {
-            return false
-        }
-        return true
+        guard !urlString.isEmpty else { return false }
+        guard let url = URL(string: urlString) else { return false }
+        guard let scheme = url.scheme?.lowercased(),
+              scheme == "http" || scheme == "https" else { return false }
+        guard let host = url.host, !host.isEmpty else { return false }
+        
+        let validHosts = [
+            "firebasestorage.googleapis.com",
+            "storage.googleapis.com",
+            "firebase.google.com",
+            "images.unsplash.com",
+            "via.placeholder.com",
+            "picsum.photos"
+        ]
+        
+        let hasValidHost = validHosts.contains { host.contains($0) }
+        let hasImageExtension = urlString.lowercased().range(of: "\\.(jpg|jpeg|png|gif|webp|bmp)", options: .regularExpression) != nil ||
+                               urlString.contains("alt=media")
+        
+        return hasValidHost || hasImageExtension
     }
     
     var body: some View {
@@ -319,33 +385,22 @@ struct FavoritePlaceCard: View {
                                 .aspectRatio(contentMode: .fill)
                                 .frame(width: 80, height: 80)
                                 .clipped()
-                        case .failure(let error):
-                        
+                        case .failure(_):
                             Image("cafe")
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                                 .frame(width: 80, height: 80)
                                 .clipped()
                                 .opacity(0.9)
-                                .onAppear {
-                                    print("Failed to load image for \(place.name): \(error.localizedDescription)")
-                                    print("Image URL: '\(place.imageURL)'")
-                                    print("Using fallback local image")
-                                }
                         case .empty:
                             if place.imageURL.isEmpty || !isValidImageURL(place.imageURL) {
-                             
                                 Image("cafe")
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
                                     .frame(width: 80, height: 80)
                                     .clipped()
                                     .opacity(0.9)
-                                    .onAppear {
-                                        print("Using fallback image for \(place.name) - Invalid URL: '\(place.imageURL)'")
-                                    }
                             } else {
-                           
                                 Rectangle()
                                     .fill(Color.gray.opacity(0.1))
                                     .overlay(
@@ -359,9 +414,6 @@ struct FavoritePlaceCard: View {
                                         }
                                     )
                                     .frame(width: 80, height: 80)
-                                    .onAppear {
-                                        print("Loading image for \(place.name): \(place.imageURL)")
-                                    }
                             }
                         @unknown default:
                             Image("cafe")
