@@ -226,6 +226,10 @@ class FirebaseAuthManager: ObservableObject {
                 // Save credentials for biometric auth and update last login
                 self?.saveCredentialsToKeychain(email: email, password: password)
                 self?.updateLastLoginTime()
+                
+                // Trigger sign-in notification
+                NotificationManager.shared.scheduleSignInNotification()
+                
                 completion(.success("Signed in successfully!"))
             }
         }
@@ -255,6 +259,10 @@ class FirebaseAuthManager: ObservableObject {
                     self?.isAuthenticated = true
                     self?.saveCredentialsToKeychain(email: email, password: password)
                     self?.updateLastLoginTime()
+                    
+                    // Trigger sign-in notification
+                    NotificationManager.shared.scheduleSignInNotification()
+                    
                     completion(.success(user))
                 }
             }
@@ -937,5 +945,4 @@ protocol AuthenticationStateDelegate: AnyObject {
     func authenticationStateDidChange(isAuthenticated: Bool)
     func authenticationDidFail(with error: Error)
 }
-
 

@@ -11,6 +11,7 @@ import Firebase
 @main
 struct quietdelightApp: App {
     @StateObject private var authManager = FirebaseAuthManager.shared
+    @StateObject private var notificationManager = NotificationManager.shared
     
     init() {
         FirebaseApp.configure()
@@ -43,7 +44,21 @@ struct quietdelightApp: App {
                 .preferredColorScheme(.light)
                 .onAppear {
                     print("App appeared - Auth loading: \(authManager.isLoading), Authenticated: \(authManager.isAuthenticated)")
+                    
+                    // Set up notifications when app launches
+                    setupNotifications()
                 }
         }
+    }
+    
+    private func setupNotifications() {
+        // Request notification permission at app launch
+        notificationManager.requestNotificationPermission()
+        
+        // Check current permission status
+        notificationManager.checkNotificationPermission()
+        
+        // Clear any existing badge
+        notificationManager.clearBadge()
     }
 }

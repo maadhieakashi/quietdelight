@@ -10,6 +10,7 @@ import FirebaseAuth
 
 struct SettingsView: View {
     @StateObject private var authManager = FirebaseAuthManager.shared
+    @StateObject private var notificationManager = NotificationManager.shared
     @State private var profileImage: UIImage? = nil
     @State private var username: String = ""
     @State private var email: String = ""
@@ -121,11 +122,45 @@ struct SettingsView: View {
                         
                             VStack(spacing: 0) {
                                 // Notifications Row
-                                SettingsToggleRow(
-                                    icon: "bell",
-                                    title: "Notifications",
-                                    subtitle: "Get notified about nearby cafes"
-                                )
+                                HStack(spacing: 16) {
+                                    Image(systemName: "bell")
+                                        .font(.system(size: 18))
+                                        .foregroundColor(Color(hex: "5A3529"))
+                                        .frame(width: 20, height: 20)
+                                    
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Notifications")
+                                            .font(.system(size: 16, weight: .medium))
+                                            .foregroundColor(.black)
+                                        
+                                        Text(notificationManager.isAuthorized ?
+                                             "Allow notifications for sign-in alerts" :
+                                             "Enable in iOS Settings to receive notifications")
+                                            .font(.system(size: 13))
+                                            .foregroundColor(notificationManager.isAuthorized ? .gray : .orange)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    Toggle("", isOn: Binding(
+                                        get: {
+                                            notificationManager.isNotificationEnabled && notificationManager.isAuthorized
+                                        },
+                                        set: { newValue in
+                                            if notificationManager.isAuthorized {
+                                                notificationManager.setNotificationEnabled(newValue)
+                                            } else {
+                                                // If iOS permissions not granted, request them
+                                                notificationManager.requestNotificationPermission()
+                                            }
+                                        }
+                                    ))
+                                    .toggleStyle(SwitchToggleStyle(tint: Color(hex: "5A3529")))
+                                    .disabled(!notificationManager.isAuthorized && !notificationManager.isNotificationEnabled)
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 14)
+                                .contentShape(Rectangle())
                             
                                 Divider()
                                     .padding(.leading, 52)
@@ -202,6 +237,9 @@ struct SettingsView: View {
                     .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
                 ]
                 navBarAppearance.shadowColor = UIColor.clear
+                
+                // Check notification permissions when view appears
+                notificationManager.checkNotificationPermission()
             
             
                 navBarAppearance.backButtonAppearance.normal.titleTextAttributes = [
@@ -341,7 +379,7 @@ struct SettingsToggleRow: View {
     let icon: String
     let title: String
     let subtitle: String
-    @State private var isToggleOn = true
+    @Binding var isToggleOn: Bool
     
     var body: some View {
         HStack(spacing: 16) {
@@ -374,5 +412,13 @@ struct SettingsToggleRow: View {
 }
 
 #Preview {
-    SettingsView()
+    struct PreviewWrapper: View {
+        @State private var isToggleOn = true
+        
+        var body: some View {
+            SettingsView()
+        }
+    }
+    
+    return PreviewWrapper()
 }
