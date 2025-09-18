@@ -319,7 +319,7 @@ class FirebaseManager: ObservableObject {
     }
 }
 
-// Review Data Model
+// Review model
 struct ReviewData {
     let id: String
     let placeId: String

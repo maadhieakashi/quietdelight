@@ -7,6 +7,7 @@
 
 
 import SwiftUI
+import FirebaseAuth
 
 struct ForgotPasswordView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -149,57 +150,33 @@ struct ForgotPasswordView: View {
     }
     
     private func sendResetEmail(to email: String) {
-        guard let url = URL(string: "https://your-api-endpoint.com/forgot-password") else {
-            alertMessage = "Error: Invalid server configuration"
-            showingAlert = true
-            return
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        let requestBody = ["email": email]
-        
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
-        } catch {
-            alertMessage = "Error: Failed to prepare request"
-            showingAlert = true
-            return
-        }
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        Auth.auth().sendPasswordReset(withEmail: email) { error in
             DispatchQueue.main.async {
                 if let error = error {
-                    self.alertMessage = "Network error: \(error.localizedDescription)"
-                    self.showingAlert = true
-                    return
-                }
-                
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    self.alertMessage = "Error: Invalid server response"
-                    self.showingAlert = true
-                    return
-                }
-                
-                if httpResponse.statusCode == 200 {
-                    self.alertMessage = "Password reset instructions have been sent to \(email)"
+                    // Handle Firebase Auth errors
+                    if let errorCode = AuthErrorCode(rawValue: (error as NSError).code) {
+                        switch errorCode {
+                        case .userNotFound:
+                            self.alertMessage = "No account found with this email address"
+                        case .invalidEmail:
+                            self.alertMessage = "Please enter a valid email address"
+                        case .tooManyRequests:
+                            self.alertMessage = "Too many requests. Please try again later"
+                        case .networkError:
+                            self.alertMessage = "Network error. Please check your connection"
+                        default:
+                            self.alertMessage = "Failed to send reset email: \(error.localizedDescription)"
+                        }
+                    } else {
+                        self.alertMessage = "Failed to send reset email: \(error.localizedDescription)"
+                    }
                     self.showingAlert = true
                 } else {
-                    // Handle different error codes
-                    switch httpResponse.statusCode {
-                    case 404:
-                        self.alertMessage = "Email address not found"
-                    case 429:
-                        self.alertMessage = "Too many requests. Please try again later"
-                    default:
-                        self.alertMessage = "Failed to send reset email. Please try again"
-                    }
+                    self.alertMessage = "Password reset instructions have been sent to \(email)"
                     self.showingAlert = true
                 }
             }
-        }.resume()
+        }
     }
     
     private func isValidEmail(_ email: String) -> Bool {

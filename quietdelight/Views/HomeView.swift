@@ -549,5 +549,3 @@ struct HomeView_Previews: PreviewProvider {
 #Preview("Home Content") {
     HomeContentView()
 }
-
-

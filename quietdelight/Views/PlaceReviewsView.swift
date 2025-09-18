@@ -16,6 +16,8 @@ struct PlaceReviewsView: View {
     @Environment(\.presentationMode) var presentationMode
     @State private var selectedFilter = "All"
     @State private var showWriteReview = false
+    @State private var helpfulCounts: [String: Int] = [:]
+    @State private var userHelpfulMarks: Set<String> = []
     
     let filterOptions = ["All", "Positive", "Neutral", "negative"]
     
@@ -209,9 +211,25 @@ struct PlaceReviewsView: View {
                         } else {
                             LazyVStack(alignment: .leading, spacing: 20) {
                                 ForEach(filteredReviews, id: \ .id) { (review: ReviewData) in
-                                    DetailedReviewView(review: review) { reviewToDelete in
-                                        deleteReview(reviewToDelete)
-                                    }
+                                    DetailedReviewView(
+                                        review: review,
+                                        helpfulCount: helpfulCounts[review.id] ?? 0,
+                                        isMarkedHelpful: userHelpfulMarks.contains(review.id),
+                                        onHelpfulTap: { reviewId in
+                                            if userHelpfulMarks.contains(reviewId) {
+                                                // Undo - remove mark and decrease count
+                                                userHelpfulMarks.remove(reviewId)
+                                                helpfulCounts[reviewId, default: 0] = max(0, helpfulCounts[reviewId, default: 0] - 1)
+                                            } else {
+                                                // Mark as helpful and increase count
+                                                userHelpfulMarks.insert(reviewId)
+                                                helpfulCounts[reviewId, default: 0] += 1
+                                            }
+                                        },
+                                        onDelete: { reviewToDelete in
+                                            deleteReview(reviewToDelete)
+                                        }
+                                    )
                                 }
                             }
                         }
@@ -225,6 +243,7 @@ struct PlaceReviewsView: View {
                 leading: Button("Back") {
                     presentationMode.wrappedValue.dismiss()
                 }
+                .foregroundColor(.brown)
             )
         }
         .sheet(isPresented: $showWriteReview) {
@@ -252,6 +271,9 @@ struct PlaceReviewsView: View {
 
 struct DetailedReviewView: View {
     let review: ReviewData
+    let helpfulCount: Int
+    let isMarkedHelpful: Bool
+    let onHelpfulTap: (String) -> Void
     let onDelete: (ReviewData) -> Void
     @State private var isExpanded = false
     @State private var showDeleteAlert = false
@@ -404,17 +426,17 @@ struct DetailedReviewView: View {
                 }
             }
             
-            // Helpful Button (placeholder for future feature)
+            // Helpful Button
             HStack {
                 Button(action: {
-                    // TODO: Implement helpful functionality
+                    onHelpfulTap(review.id)
                 }) {
                     HStack {
-                        Image(systemName: "hand.thumbsup")
-                        Text("Helpful (12)")
+                        Image(systemName: isMarkedHelpful ? "hand.thumbsup.fill" : "hand.thumbsup")
+                        Text("Helpful (\(helpfulCount))")
                     }
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(isMarkedHelpful ? .brown : .secondary)
                 }
                 
                 Spacer()
