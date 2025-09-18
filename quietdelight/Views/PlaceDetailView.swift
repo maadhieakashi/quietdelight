@@ -362,9 +362,9 @@ struct PlaceDetailView: View {
         }
         .sheet(isPresented: $showWriteReview) {
             WriteReviewView(place: place) { newReview in
-                // Add the new review to the current list for immediate UI update
+                
                 reviews.insert(newReview, at: 0)
-                // Then reload all reviews to ensure consistency with data sources
+                
                 loadReviews()
             }
         }
@@ -390,13 +390,13 @@ struct PlaceDetailView: View {
     }
     
     private func loadReviews() {
-        // First load from Core Data for immediate display (offline capability)
+       
         loadReviewsFromCoreData()
         
         // Then fetch from Firebase for latest updates
         firebaseManager.fetchReviews(for: place.id) { fetchedReviews in
             DispatchQueue.main.async {
-                // Merge Core Data and Firebase reviews, avoiding duplicates
+                // Merge Core Data and Firebase reviews
                 var allReviews = self.reviews
                 
                 for firebaseReview in fetchedReviews {
@@ -405,7 +405,7 @@ struct PlaceDetailView: View {
                     }
                 }
                 
-                // Sort by creation date (newest first)
+                // Sort by creation date
                 self.reviews = allReviews.sorted { $0.createdAt > $1.createdAt }
             }
         }
