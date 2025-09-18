@@ -364,7 +364,7 @@ struct MapView: View {
                 self.cafes = cafeSearchService.cafes
                 print("Found \(self.cafes.count) cafes from search")
                 
-                // Save discovered cafes to Firebase
+                // Save cafe in firebase
                 self.saveCafesToFirebase()
                 
              
@@ -531,7 +531,7 @@ struct CustomAnnotationView: View {
                         .shadow(color: Color.black.opacity(0.4), radius: 6, x: 0, y: 4)
                 )
                 
-                // Pointer - larger
+                // larger
                 Image(systemName: "arrowtriangle.down.fill")
                     .foregroundColor(venueType.color)
                     .font(.system(size: 12))

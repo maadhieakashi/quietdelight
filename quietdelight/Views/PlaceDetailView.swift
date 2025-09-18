@@ -17,7 +17,7 @@ struct PlaceDetailView: View {
     @State private var showWriteReview = false
     @State private var showAllReviews = false
     
-    
+ 
     var averageQuietnessRating: Double {
         guard !reviews.isEmpty else { return 0.0 }
         return reviews.reduce(0) { $0 + $1.quietnessRating } / Double(reviews.count)
@@ -33,7 +33,7 @@ struct PlaceDetailView: View {
         return reviews.reduce(0) { $0 + $1.foodTasteRating } / Double(reviews.count)
     }
     
-    // Computed property for overall rating based on all user reviews
+   
     var overallRating: Double {
         guard !reviews.isEmpty else { return 0.0 }
         return (averageQuietnessRating + averageWiFiRating + averageFoodRating) / 3.0
@@ -42,7 +42,7 @@ struct PlaceDetailView: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0, pinnedViews: []) {
-                // Header Image with Modern Design
+              
                 ZStack(alignment: .topTrailing) {
                     AsyncImage(url: URL(string: place.imageURL)) { image in
                         image
@@ -60,7 +60,7 @@ struct PlaceDetailView: View {
                     .frame(height: 280)
                     .clipped()
                     
-                    // Favorite Button with Modern Styling
+                    // Favorite Button
                     Button(action: toggleFavorite) {
                         Image(systemName: isFavorite ? "heart.fill" : "heart")
                             .foregroundColor(isFavorite ? .red : .white)
@@ -76,7 +76,7 @@ struct PlaceDetailView: View {
                     .padding(.trailing, 20)
                 }
                 
-                // Modern Status Indicator
+                //  Status Indicator
                 VStack(spacing: 0) {
                     HStack(spacing: 12) {
                         // Work Friendly Status
@@ -138,7 +138,7 @@ struct PlaceDetailView: View {
                             .lineSpacing(4)
                             .multilineTextAlignment(.leading)
                         
-                        // Modern Features Grid
+                        // Features Grid
                         LazyVGrid(columns: [
                             GridItem(.flexible()),
                             GridItem(.flexible())
@@ -182,7 +182,7 @@ struct PlaceDetailView: View {
                     }
                     .padding(.horizontal, 24)
                     
-                    // Modern Ratings Section
+                    // Ratings Section
                     VStack(alignment: .leading, spacing: 24) {
                         if reviews.isEmpty {
                             VStack(spacing: 20) {
@@ -227,7 +227,7 @@ struct PlaceDetailView: View {
                     }
                     .padding(.horizontal, 24)
                     
-                    // Modern Total Rating Card
+                    //Total Rating Card
                     VStack(spacing: 0) {
                         HStack {
                             VStack(alignment: .leading, spacing: 12) {
@@ -296,8 +296,8 @@ struct PlaceDetailView: View {
                             )
                             .foregroundColor(.white)
                         }
-                  
-                        // Reviews
+                        
+                        // Reviews Content
                         if reviews.isEmpty {
                             VStack(spacing: 24) {
                                 Image(systemName: "bubble.left.and.bubble.right")
@@ -356,9 +356,16 @@ struct PlaceDetailView: View {
             loadReviews()
             checkFavoriteStatus()
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            // Reload reviews when app comes back to foreground
+            loadReviews()
+        }
         .sheet(isPresented: $showWriteReview) {
             WriteReviewView(place: place) { newReview in
+                // Add the new review to the current list for immediate UI update
                 reviews.insert(newReview, at: 0)
+                // Then reload all reviews to ensure consistency with data sources
+                loadReviews()
             }
         }
         .sheet(isPresented: $showAllReviews) {
@@ -383,11 +390,31 @@ struct PlaceDetailView: View {
     }
     
     private func loadReviews() {
+        // First load from Core Data for immediate display (offline capability)
+        loadReviewsFromCoreData()
+        
+        // Then fetch from Firebase for latest updates
         firebaseManager.fetchReviews(for: place.id) { fetchedReviews in
             DispatchQueue.main.async {
-                self.reviews = fetchedReviews
+                // Merge Core Data and Firebase reviews, avoiding duplicates
+                var allReviews = self.reviews
+                
+                for firebaseReview in fetchedReviews {
+                    if !allReviews.contains(where: { $0.id == firebaseReview.id }) {
+                        allReviews.append(firebaseReview)
+                    }
+                }
+                
+                // Sort by creation date (newest first)
+                self.reviews = allReviews.sorted { $0.createdAt > $1.createdAt }
             }
         }
+    }
+    
+    private func loadReviewsFromCoreData() {
+        let coreDataReviews = coreDataManager.fetchReviews(for: place.id)
+        let reviewDataArray = coreDataReviews.compactMap { coreDataManager.convertToReviewData($0) }
+        self.reviews = reviewDataArray.sorted { $0.createdAt > $1.createdAt }
     }
     
     private func deleteReview(_ review: ReviewData) {
@@ -406,7 +433,7 @@ struct PlaceDetailView: View {
     }
 }
 
-// MARK: - Modern Components
+//feature card
 
 struct ModernFeatureCard: View {
     let icon: String
@@ -651,7 +678,7 @@ struct FeatureTag: View {
     let text: String
     
     var body: some View {
-        // Use the modern version
+     
         ModernFeatureTag(text: text)
     }
 }
@@ -660,7 +687,7 @@ struct StarsView: View {
     let rating: Double
     
     var body: some View {
-        // Use the modern version
+       
         ModernStarsView(rating: rating)
     }
 }
@@ -669,7 +696,7 @@ struct BackButton: View {
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
-        // Use the modern version
+      
         ModernBackButton()
     }
 }

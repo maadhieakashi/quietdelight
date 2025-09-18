@@ -169,7 +169,7 @@ struct EditProfileView: View {
             loadUserProfile()
         }
         .sheet(isPresented: $showImagePicker) {
-            ImagePicker(selectedImage: $profileImage)
+            ImagePicker(selectedImage: $profileImage, allowsEditing: true)
         }
         .alert("Profile Update", isPresented: $showAlert) {
             Button("OK") { }
@@ -180,8 +180,14 @@ struct EditProfileView: View {
     
     private func loadUserProfile() {
         if let user = authManager.currentUser {
-            username = user.displayName ?? ""
             email = user.email ?? ""
+            
+            // Use the new getUsername method to fetch username
+            authManager.getUsername { username in
+                DispatchQueue.main.async {
+                    self.username = username ?? ""
+                }
+            }
             
             if let url = user.photoURL {
                 fetchProfileImage(from: url)
@@ -200,10 +206,17 @@ struct EditProfileView: View {
     }
     
     private func saveProfile() {
+        // Validate username is not empty
+        guard !username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            alertMessage = "Username cannot be empty"
+            showAlert = true
+            return
+        }
+        
         isLoading = true
         
         if let image = profileImage {
-            // Update with image
+            // Update with image and username
             authManager.updateProfileWithImage(image, displayName: username) { result in
                 DispatchQueue.main.async {
                     self.isLoading = false
@@ -225,8 +238,8 @@ struct EditProfileView: View {
                 }
             }
         } else {
-            // Update display name only
-            authManager.updateUserProfile(displayName: username, photoURL: nil) { result in
+            // Update username only using the new method
+            authManager.updateUsername(username) { result in
                 DispatchQueue.main.async {
                     self.isLoading = false
                     

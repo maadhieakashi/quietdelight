@@ -76,9 +76,6 @@ class FirebaseAuthManager: ObservableObject {
     
     // Store the auth state listener handle
     private var authStateHandle: AuthStateDidChangeListenerHandle?
-    // In-memory credentials for simulator/testing (not secure for production)
-    private var cachedEmail: String?
-    private var cachedPassword: String?
     
     // Initialization
     private init() {
@@ -119,7 +116,7 @@ class FirebaseAuthManager: ObservableObject {
         }
     }
     
-    // MARK: - Sign Up Methods
+    // Sign Up
     
     func signUp(
         username: String,
@@ -139,7 +136,7 @@ class FirebaseAuthManager: ObservableObject {
             confirmPassword: confirmPassword,
             agreeToTerms: agreeToTerms
         ) else {
-            // Validation passed, proceed with sign up
+            
             performSignUp(
                 userData: UserData(
                     username: username,
@@ -182,7 +179,7 @@ class FirebaseAuthManager: ObservableObject {
                 if let error = error {
                     completion(.failure(error))
                 } else if let user = result?.user {
-                    // Update display name if provided
+                    // Update display name
                     if let displayName = displayName {
                         let changeRequest = user.createProfileChangeRequest()
                         changeRequest.displayName = displayName
@@ -207,25 +204,27 @@ class FirebaseAuthManager: ObservableObject {
         Auth.auth().signIn(withEmail: email, password: password) { [weak self] authResult, error in
             DispatchQueue.main.async {
                 self?.isLoading = false
+                
                 if let error = error {
                     print("Sign in error: \(error.localizedDescription)")
                     completion(.failure(self?.handleAuthError(error) ?? "Sign in failed"))
                     return
                 }
+                
                 guard let user = authResult?.user else {
                     print("No user returned from sign in")
                     completion(.failure("Failed to sign in. Please try again."))
                     return
                 }
+                
                 print("Sign in successful for user: \(user.email ?? "unknown")")
+                
                 // Update authentication state
                 self?.currentUser = user
                 self?.isAuthenticated = true
+                
                 // Save credentials for biometric auth and update last login
                 self?.saveCredentialsToKeychain(email: email, password: password)
-                // Also store in memory for simulator/testing
-                self?.cachedEmail = email
-                self?.cachedPassword = password
                 self?.updateLastLoginTime()
                 completion(.success("Signed in successfully!"))
             }
@@ -269,7 +268,8 @@ class FirebaseAuthManager: ObservableObject {
             try Auth.auth().signOut()
             self.currentUser = nil
             self.isAuthenticated = false
-            // Do NOT remove credentials from Keychain, so Face ID can be used after logout
+            // Optionally remove saved credentials
+            removeCredentialsFromKeychain()
             completion(.success("Signed out successfully"))
         } catch {
             completion(.failure("Failed to sign out: \(error.localizedDescription)"))
@@ -389,15 +389,12 @@ class FirebaseAuthManager: ObservableObject {
             DispatchQueue.main.async {
                 if success {
                     print("Biometric authentication successful")
-                    // Try to retrieve saved credentials from keychain or in-memory (simulator)
+                    // Try to retrieve saved credentials and sign in
                     if let credentials = self?.getCredentialsFromKeychain() {
                         print("Retrieved credentials from keychain for: \(credentials.email)")
                         self?.signInWithEmailPassword(email: credentials.email, password: credentials.password, completion: completion)
-                    } else if let email = self?.cachedEmail, let password = self?.cachedPassword {
-                        print("Using in-memory credentials for: \(email)")
-                        self?.signInWithEmailPassword(email: email, password: password, completion: completion)
                     } else {
-                        print("No saved credentials found in keychain or memory")
+                        print("No saved credentials found in keychain")
                         completion(.failure(AuthError.noSavedCredentials))
                     }
                 } else {
@@ -640,8 +637,20 @@ class FirebaseAuthManager: ObservableObject {
                     return
                 }
                 
-                // Save additional user data to Firestore
-                self?.saveUserDataToFirestore(user: user, userData: userData, completion: completion)
+                // Set display name in Firebase Auth
+                let changeRequest = user.createProfileChangeRequest()
+                changeRequest.displayName = userData.username
+                
+                changeRequest.commitChanges { error in
+                    if let error = error {
+                        print("Error setting display name: \(error.localizedDescription)")
+                    } else {
+                        print("Display name set successfully: \(userData.username)")
+                    }
+                    
+                   
+                    self?.saveUserDataToFirestore(user: user, userData: userData, completion: completion)
+                }
             }
         }
     }
@@ -742,6 +751,52 @@ class FirebaseAuthManager: ObservableObject {
                 completion(document.data())
             } else {
                 completion(nil)
+            }
+        }
+    }
+    
+    // Get username
+    func getUsername(completion: @escaping (String?) -> Void) {
+        getUserData { userData in
+            if let userData = userData,
+               let username = userData["username"] as? String {
+                completion(username)
+            } else {
+                
+                completion(self.currentUser?.displayName)
+            }
+        }
+    }
+    
+  
+    func updateUsername(_ newUsername: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let user = currentUser else {
+            completion(.failure(AuthError.userNotFound))
+            return
+        }
+        
+        // Update Firebase Auth displayName
+        let changeRequest = user.createProfileChangeRequest()
+        changeRequest.displayName = newUsername
+        
+        changeRequest.commitChanges { [weak self] error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            // Update Firestore
+            self?.db.collection("users").document(user.uid).updateData([
+                "username": newUsername,
+                "lastUpdatedAt": Timestamp()
+            ]) { error in
+                DispatchQueue.main.async {
+                    if let error = error {
+                        completion(.failure(error))
+                    } else {
+                        completion(.success(()))
+                    }
+                }
             }
         }
     }
@@ -882,4 +937,5 @@ protocol AuthenticationStateDelegate: AnyObject {
     func authenticationStateDidChange(isAuthenticated: Bool)
     func authenticationDidFail(with error: Error)
 }
+
 

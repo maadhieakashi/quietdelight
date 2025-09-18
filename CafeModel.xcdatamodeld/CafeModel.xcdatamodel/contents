@@ -24,11 +24,11 @@
     <entity name="Review" representedClassName="Review" syncable="YES" codeGenerationType="class">
         <attribute name="comment" optional="YES" attributeType="String"/>
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="foodtasteRating" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="foodTasteRating" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="id" optional="YES" attributeType="String"/>
         <attribute name="placeId" optional="YES" attributeType="String"/>
         <attribute name="powerOutletStatus" optional="YES" attributeType="String"/>
-        <attribute name="quietnessRating" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="quietnessRating" optional="YES" attributeType="Double" usesScalarValueType="YES"/>
         <attribute name="rating" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="userId" optional="YES" attributeType="String"/>
         <attribute name="userImageURL" optional="YES" attributeType="String"/>

@@ -34,7 +34,13 @@ struct WriteReviewView: View {
         if reviewText.isEmpty || isSubmitting {
             return AnyShapeStyle(Color.gray)
         } else {
-            return AnyShapeStyle(LinearGradient(gradient: Gradient(colors: [.blue, .blue.opacity(0.8)]), startPoint: .leading, endPoint: .trailing))
+            return AnyShapeStyle(
+                LinearGradient(
+                    gradient: Gradient(colors: [.blue, .blue.opacity(0.8)]),
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
         }
     }
     
@@ -126,7 +132,10 @@ struct WriteReviewView: View {
                                     .frame(minHeight: 120)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 15)
-                                            .stroke(reviewText.isEmpty ? Color.clear : Color.blue.opacity(0.3), lineWidth: 2)
+                                            .stroke(
+                                                reviewText.isEmpty ? Color.clear : Color.blue.opacity(0.3),
+                                                lineWidth: 2
+                                            )
                                     )
                                 
                                 if reviewText.isEmpty {
@@ -197,7 +206,10 @@ struct WriteReviewView: View {
                                     .font(.headline)
                                     .fontWeight(.semibold)
                                 
-                                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 10) {
+                                LazyVGrid(
+                                    columns: Array(repeating: GridItem(.flexible()), count: 2),
+                                    spacing: 10
+                                ) {
                                     ForEach(featureOptions, id: \.self) { feature in
                                         Button(action: {
                                             if selectedFeatures.contains(feature) {
@@ -221,13 +233,26 @@ struct WriteReviewView: View {
                                             .padding(.vertical, 12)
                                             .background(
                                                 RoundedRectangle(cornerRadius: 12)
-                                                    .fill(selectedFeatures.contains(feature) ?
-                                                          LinearGradient(gradient: Gradient(colors: [.blue, .blue.opacity(0.8)]), startPoint: .leading, endPoint: .trailing) :
-                                                          LinearGradient(gradient: Gradient(colors: [Color(.systemGray6), Color(.systemGray5)]), startPoint: .leading, endPoint: .trailing))
+                                                    .fill(
+                                                        selectedFeatures.contains(feature) ?
+                                                        LinearGradient(
+                                                            gradient: Gradient(colors: [.blue, .blue.opacity(0.8)]),
+                                                            startPoint: .leading,
+                                                            endPoint: .trailing
+                                                        ) :
+                                                        LinearGradient(
+                                                            gradient: Gradient(colors: [Color(.systemGray6), Color(.systemGray5)]),
+                                                            startPoint: .leading,
+                                                            endPoint: .trailing
+                                                        )
+                                                    )
                                             )
                                             .foregroundColor(selectedFeatures.contains(feature) ? .white : .primary)
                                             .scaleEffect(selectedFeatures.contains(feature) ? 1.02 : 1.0)
-                                            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: selectedFeatures.contains(feature))
+                                            .animation(
+                                                .spring(response: 0.3, dampingFraction: 0.6),
+                                                value: selectedFeatures.contains(feature)
+                                            )
                                         }
                                         .buttonStyle(PlainButtonStyle())
                                     }
@@ -316,18 +341,26 @@ struct WriteReviewView: View {
                                             .padding(15)
                                             .background(
                                                 RoundedRectangle(cornerRadius: 15)
-                                                    .fill(powerOutletStatus == option ?
-                                                          getOutletColor(option).opacity(0.1) :
-                                                          Color(.systemGray6))
+                                                    .fill(
+                                                        powerOutletStatus == option ?
+                                                        getOutletColor(option).opacity(0.1) :
+                                                        Color(.systemGray6)
+                                                    )
                                                     .overlay(
                                                         RoundedRectangle(cornerRadius: 15)
-                                                            .stroke(powerOutletStatus == option ?
-                                                                   getOutletColor(option) :
-                                                                   Color.clear, lineWidth: 2)
+                                                            .stroke(
+                                                                powerOutletStatus == option ?
+                                                                getOutletColor(option) :
+                                                                Color.clear,
+                                                                lineWidth: 2
+                                                            )
                                                     )
                                             )
                                             .scaleEffect(powerOutletStatus == option ? 1.02 : 1.0)
-                                            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: powerOutletStatus == option)
+                                            .animation(
+                                                .spring(response: 0.3, dampingFraction: 0.6),
+                                                value: powerOutletStatus == option
+                                            )
                                         }
                                         .buttonStyle(PlainButtonStyle())
                                     }
@@ -368,11 +401,16 @@ struct WriteReviewView: View {
                         .padding(20)
                         .background(
                             RoundedRectangle(cornerRadius: 20)
-                                .fill(LinearGradient(
-                                    gradient: Gradient(colors: [Color.yellow.opacity(0.1), Color.orange.opacity(0.1)]),
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                ))
+                                .fill(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            Color.yellow.opacity(0.1),
+                                            Color.orange.opacity(0.1)
+                                        ]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
                                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
                         )
                         
@@ -524,7 +562,11 @@ struct RatingSection: View {
                         }) {
                             ZStack {
                                 Circle()
-                                    .fill(Double(index) <= rating ? color.opacity(0.12) : Color(.systemGray6))
+                                    .fill(
+                                        Double(index) <= rating ?
+                                        color.opacity(0.12) :
+                                        Color(.systemGray6)
+                                    )
                                     .frame(width: 32, height: 32)
                                 
                                 Image(systemName: Double(index) <= rating ? "star.fill" : "star")
@@ -533,7 +575,10 @@ struct RatingSection: View {
                             }
                         }
                         .scaleEffect(Double(index) <= rating ? 1.03 : 1.0)
-                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: rating)
+                        .animation(
+                            .spring(response: 0.3, dampingFraction: 0.6),
+                            value: rating
+                        )
                     }
                 }
                 

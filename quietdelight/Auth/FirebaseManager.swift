@@ -173,7 +173,7 @@ class FirebaseManager: ObservableObject {
     
     // Reviews
     func addReview(_ review: ReviewData, completion: @escaping (Bool) -> Void) {
-        let reviewRef = db.collection("reviews").document()
+        let reviewRef = db.collection("reviews").document(review.id)
         
         let reviewData: [String: Any] = [
             "placeId": review.placeId,
@@ -186,7 +186,7 @@ class FirebaseManager: ObservableObject {
             "wifiStabilityRating": review.wifiStabilityRating,
             "foodTasteRating": review.foodTasteRating,
             "powerOutletStatus": review.powerOutletStatus,
-            "createdAt": Timestamp(date: Date())
+            "createdAt": Timestamp(date: review.createdAt)
         ]
         
         reviewRef.setData(reviewData) { error in
@@ -194,6 +194,8 @@ class FirebaseManager: ObservableObject {
                 print("Error adding review: \(error)")
                 completion(false)
             } else {
+                // Also save to Core Data
+                CoreDataManager.shared.addReview(review)
                 completion(true)
                 
                 self.updatePlaceRating(placeId: review.placeId)
@@ -232,6 +234,9 @@ class FirebaseManager: ObservableObject {
                     )
                 } ?? []
                 
+                // Sync reviews with Core Data
+                CoreDataManager.shared.syncReviewsFromFirebase(reviews)
+                
                 completion(reviews)
             }
     }
@@ -242,6 +247,8 @@ class FirebaseManager: ObservableObject {
                 print("Error deleting review: \(error)")
                 completion(false)
             } else {
+                // Also delete from Core Data
+                CoreDataManager.shared.deleteReview(reviewId: reviewId)
                 completion(true)
               
                 self.updatePlaceRating(placeId: placeId)
