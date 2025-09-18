@@ -18,47 +18,50 @@ struct quietdelightApp: App {
     }
     
     var body: some Scene {
-        WindowGroup {
-                Group {
-                    if authManager.isLoading {
-                        SplashView()
-                    } else if authManager.isAuthenticated {
-                        
-                        let isNewUser = UserDefaults.standard.bool(forKey: "isNewUser")
-                        let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
-                        
-                        if isNewUser && !hasCompletedOnboarding {
-                            
-                            OnboardingView()
-                        } else if hasCompletedOnboarding {
+          WindowGroup {
+                  Group {
+                      if authManager.isLoading {
+                          SplashView()
+                      } else if authManager.isAuthenticated {
                           
-                            TabBarView()
-                        } else {
+                          let isNewUser = UserDefaults.standard.bool(forKey: "isNewUser")
+                          let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
                           
-                            TabBarView()
-                        }
-                    } else {
-                        SigninView()
-                    }
-                }
-                .preferredColorScheme(.light)
-                .onAppear {
-                    print("App appeared - Auth loading: \(authManager.isLoading), Authenticated: \(authManager.isAuthenticated)")
-                    
-                    // Set up notifications when app launches
-                    setupNotifications()
-                }
-        }
-    }
-    
-    private func setupNotifications() {
-        // Request notification permission at app launch
-        notificationManager.requestNotificationPermission()
-        
-        // Check current permission status
-        notificationManager.checkNotificationPermission()
-        
-        // Clear any existing badge
-        notificationManager.clearBadge()
-    }
-}
+                          if isNewUser && !hasCompletedOnboarding {
+                              // Show onboarding for new users who haven't completed it
+                              OnboardingView()
+                                  .onAppear {
+                                      print("📱 Showing OnboardingView - isNewUser: \(isNewUser), hasCompletedOnboarding: \(hasCompletedOnboarding)")
+                                  }
+                          } else {
+                              // Show main app for existing users or those who completed onboarding
+                              TabBarView()
+                                  .onAppear {
+                                      print("📱 Showing TabBarView - isNewUser: \(isNewUser), hasCompletedOnboarding: \(hasCompletedOnboarding)")
+                                  }
+                          }
+                      } else {
+                          SigninView()
+                      }
+                  }
+                  .preferredColorScheme(.light)
+                  .onAppear {
+                      print("App appeared - Auth loading: \(authManager.isLoading), Authenticated: \(authManager.isAuthenticated)")
+                      
+                      // Set up notifications when app launches
+                      setupNotifications()
+                  }
+          }
+      }
+      
+      private func setupNotifications() {
+          // Request notification permission at app launch
+          notificationManager.requestNotificationPermission()
+          
+          // Check current permission status
+          notificationManager.checkNotificationPermission()
+          
+          // Clear any existing badge
+          notificationManager.clearBadge()
+      }
+  }

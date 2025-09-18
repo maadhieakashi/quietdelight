@@ -683,7 +683,17 @@ class FirebaseAuthManager: ObservableObject {
                     completion(.failure("Account created but failed to save profile data: \(error.localizedDescription)"))
                 } else {
                     print("User data saved successfully to Firestore")
-                    completion(.success("Account created successfully! Please sign in."))
+                    
+                    // Update authentication state - user is now authenticated
+                    self.currentUser = user
+                    self.isAuthenticated = true
+                    
+                    // Save credentials for biometric auth if enabled
+                    if userData.enableFaceID {
+                        self.saveCredentialsToKeychain(email: userData.email, password: "")
+                    }
+                    
+                    completion(.success("Account created successfully! Welcome to Quiet Delight."))
                 }
             }
         }

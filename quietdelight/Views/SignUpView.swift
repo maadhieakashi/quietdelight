@@ -364,28 +364,31 @@ HStack {
             agreeToTerms: agreeToTerms
         ) { result in
             print("-- SIGNUP RESULT --")
-            switch result {
-            case .success(let message):
-                print("Success: \(message)")
-                signUpSuccess = true
-                // Set a flag to indicate this is a new user
-                UserDefaults.standard.set(true, forKey: "isNewUser")
-                UserDefaults.standard.synchronize()
-                // Show success message only, no navigation
-                errorMessage = message
-                showAlert = true
-            case .failure(let error):
-                print("Failure: \(error)")
-                signUpSuccess = false
-                errorMessage = error
-                showAlert = true
-            }
-            print("-----")
-        }
-    }
-}
+                      switch result {
+                      case .success(let message):
+                          print("Success: \(message)")
+                          signUpSuccess = true
+                          // Set a new user
+                          UserDefaults.standard.set(true, forKey: "isNewUser")
+                          UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
+                          UserDefaults.standard.synchronize()
+                          
+                          // Show success message
+                          errorMessage = message
+                          showAlert = true
+                          
+                      case .failure(let error):
+                          print("Failure: \(error)")
+                          signUpSuccess = false
+                          errorMessage = error
+                          showAlert = true
+                      }
+                      print("-----")
+                  }
+              }
+          }
 
 
-#Preview {
-    SignUpView()
-}
+          #Preview {
+              SignUpView()
+          }
