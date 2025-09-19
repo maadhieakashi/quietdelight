@@ -14,16 +14,78 @@ struct PlacesListView: View {
     @State private var selectedPlace: PlaceData?
     @State private var showPlaceDetail = false
     @State private var isLoading = true
+    @State private var showQuickFilters = false
+    
+    // Filter states
+    @State private var filterWiFi = false
+    @State private var filterQuietZone = false
+    @State private var filterPowerOutlets = false
+    @State private var selectedRatingFilter: RatingFilter = .all
+    
+    enum RatingFilter: String, CaseIterable {
+        case all = "All Ratings"
+        case fourPlus = "4.0+ Stars"
+        case threePlus = "3.0+ Stars"
+    }
+    
+    enum SortOption: String, CaseIterable {
+        case rating = "Rating"
+        case name = "Name"
+        case distance = "Distance"
+    }
     
     var filteredPlaces: [PlaceData] {
-        if searchText.isEmpty {
-            return places
-        } else {
-            return places.filter { place in
+        var filtered = places
+        
+        // Apply text search filter
+        if !searchText.isEmpty {
+            filtered = filtered.filter { place in
                 place.name.localizedCaseInsensitiveContains(searchText) ||
                 place.address.localizedCaseInsensitiveContains(searchText)
             }
         }
+        
+        // Apply feature filters
+        if filterWiFi {
+            filtered = filtered.filter { $0.hasWiFi }
+        }
+        
+        if filterQuietZone {
+            filtered = filtered.filter { $0.isQuietZone }
+        }
+        
+        if filterPowerOutlets {
+            filtered = filtered.filter { $0.hasPowerOutlets }
+        }
+        
+        // Apply rating filter
+        switch selectedRatingFilter {
+        case .fourPlus:
+            filtered = filtered.filter { $0.rating >= 4.0 }
+        case .threePlus:
+            filtered = filtered.filter { $0.rating >= 3.0 }
+        case .all:
+            break
+        }
+        
+        // Sort by rating (default)
+        filtered = filtered.sorted { $0.rating > $1.rating }
+        
+        return filtered
+    }
+    
+    var hasActiveFilters: Bool {
+        return filterWiFi || filterQuietZone || filterPowerOutlets ||
+               selectedRatingFilter != .all
+    }
+    
+    var activeFiltersCount: Int {
+        var count = 0
+        if filterWiFi { count += 1 }
+        if filterQuietZone { count += 1 }
+        if filterPowerOutlets { count += 1 }
+        if selectedRatingFilter != .all { count += 1 }
+        return count
     }
     
     var body: some View {
@@ -43,25 +105,119 @@ struct PlacesListView: View {
                     .cornerRadius(25)
                     
                     Button(action: {
-                        // Filter action
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showQuickFilters.toggle()
+                        }
                     }) {
-                        Image(systemName: "slider.horizontal.3")
-                            .foregroundColor(.white)
-                            .padding(10)
-                            .background(Color.brown)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        ZStack {
+                            Image(systemName: "slider.horizontal.3")
+                                .foregroundColor(.white)
+                                .padding(10)
+                                .background(Color.brown)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                            
+                            // Show indicator if any filters are active
+                            if hasActiveFilters {
+                                Circle()
+                                    .fill(Color.red)
+                                    .frame(width: 8, height: 8)
+                                    .offset(x: 8, y: -8)
+                            }
+                        }
                     }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 10)
                 
+                // Quick Filter Tags (only show when toggled)
+                if showQuickFilters {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 10) {
+                            QuickFilterTag(
+                                title: "WiFi",
+                                icon: "wifi",
+                                isSelected: filterWiFi
+                            ) {
+                                filterWiFi.toggle()
+                            }
+                            
+                            QuickFilterTag(
+                                title: "Quiet",
+                                icon: "speaker.slash",
+                                isSelected: filterQuietZone
+                            ) {
+                                filterQuietZone.toggle()
+                            }
+                            
+                            QuickFilterTag(
+                                title: "Power",
+                                icon: "bolt",
+                                isSelected: filterPowerOutlets
+                            ) {
+                                filterPowerOutlets.toggle()
+                            }
+                            
+                            QuickFilterTag(
+                                title: "4+ Stars",
+                                icon: "star.fill",
+                                isSelected: selectedRatingFilter == .fourPlus
+                            ) {
+                                selectedRatingFilter = selectedRatingFilter == .fourPlus ? .all : .fourPlus
+                            }
+                            
+                            QuickFilterTag(
+                                title: "3+ Stars",
+                                icon: "star",
+                                isSelected: selectedRatingFilter == .threePlus
+                            ) {
+                                selectedRatingFilter = selectedRatingFilter == .threePlus ? .all : .threePlus
+                            }
+                            
+                            // Clear filters button
+                            if hasActiveFilters {
+                                Button(action: {
+                                    clearAllFilters()
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "xmark.circle.fill")
+                                        Text("Clear")
+                                    }
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color.red.opacity(0.1))
+                                    .cornerRadius(15)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                    }
+                    .padding(.vertical, 10)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+                
                 // Header
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("Work Friendly Cafes")
-                        .font(.title)
-                        .fontWeight(.bold)
+                    HStack {
+                        Text("Work Friendly Cafes")
+                            .font(.title)
+                            .fontWeight(.bold)
+                        
+                        Spacer()
+                        
+                        if hasActiveFilters {
+                            Text("\(activeFiltersCount) filter\(activeFiltersCount == 1 ? "" : "s")")
+                                .font(.caption)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Color.brown)
+                                .cornerRadius(10)
+                        }
+                    }
                     
-                    Text("Colombo 7 Area • \(places.count) places found")
+                    Text("Colombo 7 Area • \(filteredPlaces.count) places found")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -118,6 +274,13 @@ struct PlacesListView: View {
                 }
             }
         }
+    }
+    
+    private func clearAllFilters() {
+        filterWiFi = false
+        filterQuietZone = false
+        filterPowerOutlets = false
+        selectedRatingFilter = .all
     }
     
     private func loadPlaces() {
@@ -291,6 +454,31 @@ struct WorkFeatureTag: View {
             .background(color.opacity(0.1))
             .foregroundColor(color)
             .cornerRadius(10)
+    }
+}
+
+struct QuickFilterTag: View {
+    let title: String
+    let icon: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.caption)
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .foregroundColor(isSelected ? .white : .brown)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(isSelected ? Color.brown : Color.brown.opacity(0.1))
+            .cornerRadius(15)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
