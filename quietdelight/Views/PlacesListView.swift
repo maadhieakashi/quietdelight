@@ -209,35 +209,8 @@ struct PlaceListCard: View {
                         }
                     }
                     
-                    // Rating breakdown
-                    HStack(spacing: 20) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(reviewRatings.wifi > 0 ? String(format: "%.1f", reviewRatings.wifi) : "--")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                            Text("WiFi")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(reviewRatings.quietness > 0 ? String(format: "%.1f", reviewRatings.quietness) : "--")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                            Text("Quiet")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(reviewRatings.food > 0 ? String(format: "%.1f", reviewRatings.food) : "--")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                            Text("Food")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                        
+                    // Power outlet status
+                    HStack {
                         Spacer()
                         
                         if place.hasPowerOutlets {

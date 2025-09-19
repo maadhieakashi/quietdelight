@@ -35,7 +35,7 @@ class CoreDataManager: ObservableObject {
         }
     }
     
-    // MARK: - Place Methods
+    //  Place Methods
     func addPlace(_ place: PlaceData) {
         // Check if place already exists to prevent dupicate
         if isPlaceExists(place) {

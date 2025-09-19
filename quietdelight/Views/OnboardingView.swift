@@ -117,14 +117,10 @@ struct OnboardingView: View {
     }
     
     private func completeOnboarding() {
-        print("📋 Completing onboarding...")
-        
-        // Set completion flags
+     
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
         UserDefaults.standard.set(false, forKey: "isNewUser")
         UserDefaults.standard.synchronize()
-        
-        print("📋 UserDefaults updated - hasCompletedOnboarding: true, isNewUser: false")
         
         // Save profile image
         if let image = profileImage {
@@ -137,12 +133,11 @@ struct OnboardingView: View {
                         print("Failed to save profile image: \(error.localizedDescription)")
                     }
                     
-                    print("📋 Navigating to TabBarView...")
                     self.navigateToHome = true
                 }
             }
         } else {
-            print("📋 No profile image, navigating to TabBarView...")
+          
             navigateToHome = true
         }
         }
