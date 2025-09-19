@@ -9,9 +9,23 @@ import Testing
 @testable import quietdelight
 
 struct quietdelightTests {
-
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+    @Test func testSignIn() async throws {
+        let auth = FirebaseAuthManager.shared
+        let testEmail = "testuser@example.com"
+        let testPassword = "testpassword"
+        let resultMessage: String? = await withCheckedContinuation { continuation in
+            auth.signIn(email: testEmail, password: testPassword) { result in
+                switch result {
+                case .success(let message):
+                    continuation.resume(returning: message)
+                case .failure(let error):
+                    continuation.resume(returning: error)
+                }
+            }
+        }
+        #expect(resultMessage != nil)
     }
+
+    
 
 }
