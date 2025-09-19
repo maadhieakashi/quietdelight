@@ -36,7 +36,7 @@ struct WriteReviewView: View {
         } else {
             return AnyShapeStyle(
                 LinearGradient(
-                    gradient: Gradient(colors: [.blue, .blue.opacity(0.8)]),
+                    gradient: Gradient(colors: [.brown, .brown.opacity(0.8)]),
                     startPoint: .leading,
                     endPoint: .trailing
                 )
@@ -114,7 +114,7 @@ struct WriteReviewView: View {
                         VStack(alignment: .leading, spacing: 15) {
                             HStack {
                                 Image(systemName: "quote.bubble.fill")
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(.brown)
                                     .font(.title2)
                                 Text("Share Your Experience")
                                     .font(.title2)
@@ -133,7 +133,7 @@ struct WriteReviewView: View {
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 15)
                                             .stroke(
-                                                reviewText.isEmpty ? Color.clear : Color.blue.opacity(0.3),
+                                                reviewText.isEmpty ? Color.clear : Color.brown.opacity(0.3),
                                                 lineWidth: 2
                                             )
                                     )
@@ -188,7 +188,7 @@ struct WriteReviewView: View {
                         VStack(alignment: .leading, spacing: 20) {
                             HStack {
                                 Image(systemName: "star.circle.fill")
-                                    .foregroundColor(.orange)
+                                    .foregroundColor(.brown)
                                     .font(.title2)
                                 Text("Rate Key Features")
                                     .font(.title2)
@@ -220,7 +220,7 @@ struct WriteReviewView: View {
                                         }) {
                                             HStack {
                                                 Image(systemName: getFeatureIcon(feature))
-                                                    .foregroundColor(selectedFeatures.contains(feature) ? .white : .blue)
+                                                    .foregroundColor(selectedFeatures.contains(feature) ? .white : .brown)
                                                 Text(feature)
                                                     .fontWeight(.medium)
                                                 Spacer()
@@ -236,7 +236,7 @@ struct WriteReviewView: View {
                                                     .fill(
                                                         selectedFeatures.contains(feature) ?
                                                         LinearGradient(
-                                                            gradient: Gradient(colors: [.blue, .blue.opacity(0.8)]),
+                                                            gradient: Gradient(colors: [.brown, .brown.opacity(0.8)]),
                                                             startPoint: .leading,
                                                             endPoint: .trailing
                                                         ) :
@@ -441,7 +441,7 @@ struct WriteReviewView: View {
                         } else {
                             Image(systemName: "paperplane.fill")
                         }
-                        Text(isSubmitting ? "Posting..." : "Post")
+                        Text(isSubmitting ? "Posting..." : "Save")
                     }
                     .foregroundColor(.white)
                     .padding(.horizontal, 20)
