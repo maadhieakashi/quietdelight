@@ -81,6 +81,7 @@ struct HomeContentView: View {
     @State private var workFriendlyPlaces: [PlaceData] = []
     @State private var selectedFilter: String? = nil
     @State private var refreshTrigger = false
+    @State private var showFilters = false
     
     //user data in firebse
     @State private var userName = ""
@@ -195,17 +196,63 @@ struct HomeContentView: View {
                         .cornerRadius(25)
                         
                         Button(action: {
-                            // Filter action
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                showFilters.toggle()
+                            }
                         }) {
                             Image(systemName: "slider.horizontal.3")
                                 .foregroundColor(.white)
                                 .font(.system(size: 16))
                                 .padding(14)
-                                .background(Color(hex: "5A3529"))
+                                .background(
+                                    Color(hex: showFilters || selectedFilter != nil ? "7A4A3A" : "5A3529")
+                                )
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                     }
                     .padding(.horizontal, 20)
+                    
+                    // Quick Filter Tags
+                    if showFilters {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Quick Filters")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.primary)
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    // Clear All Filters
+                                    FilterTag(
+                                        text: "Clear All",
+                                        isSelected: selectedFilter == nil
+                                    ) {
+                                        selectedFilter = nil
+                                    }
+                                    
+                                    // Quick Filter Options
+                                    ForEach(quickFilters, id: \.self) { filter in
+                                        FilterTag(
+                                            text: filter,
+                                            isSelected: selectedFilter == filter
+                                        ) {
+                                            if selectedFilter == filter {
+                                                selectedFilter = nil
+                                            } else {
+                                                selectedFilter = filter
+                                            }
+                                        }
+                                    }
+                                }
+                                .padding(.horizontal, 20)
+                            }
+                        }
+                        .padding(.vertical, 10)
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .move(edge: .top)),
+                            removal: .opacity.combined(with: .move(edge: .top))
+                        ))
+                    }
                     
                     // Work Friendly Cafes Section
                     VStack(alignment: .leading, spacing: 20) {
@@ -549,3 +596,5 @@ struct HomeView_Previews: PreviewProvider {
 #Preview("Home Content") {
     HomeContentView()
 }
+
+
