@@ -16,6 +16,7 @@
 		537F98482E55AB980059A38C /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = 537F98472E55AB980059A38C /* FirebaseAI */; };
 		537F984A2E55ABA80059A38C /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 537F98492E55ABA80059A38C /* FirebaseAppCheck */; };
 		A622ADB02E62EDFF001A2798 /* CafeModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A622ADAE2E62EDFF001A2798 /* CafeModel.xcdatamodeld */; };
+		A694A6672E7D5FFE00C47CD2 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = A694A6662E7D5FD800C47CD2 /* README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -40,6 +41,7 @@
 		53C079082E52DDCF00A1B763 /* quietdelightTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = quietdelightTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		53C079122E52DDCF00A1B763 /* quietdelightUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = quietdelightUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A622ADAF2E62EDFF001A2798 /* CafeModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = CafeModel.xcdatamodel; sourceTree = "<group>"; };
+		A694A6662E7D5FD800C47CD2 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -103,6 +105,7 @@
 		53C078F22E52DDCE00A1B763 = {
 			isa = PBXGroup;
 			children = (
+				A694A6662E7D5FD800C47CD2 /* README.md */,
 				A622ADAE2E62EDFF001A2798 /* CafeModel.xcdatamodeld */,
 				53C078FD2E52DDCE00A1B763 /* quietdelight */,
 				53C0790B2E52DDCF00A1B763 /* quietdelightTests */,
@@ -253,6 +256,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A694A6672E7D5FFE00C47CD2 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -440,6 +444,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 7HZ27FQZPX;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "This app uses Face ID to securely authenticate and sign you in to your account.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -470,6 +475,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 7HZ27FQZPX;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "This app uses Face ID to securely authenticate and sign you in to your account.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
