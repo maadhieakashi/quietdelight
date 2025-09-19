@@ -113,7 +113,7 @@ struct PlacesListView: View {
                             Image(systemName: "slider.horizontal.3")
                                 .foregroundColor(.white)
                                 .padding(10)
-                                .background(Color.brown)
+                                .background(Color(hex: "5A3529"))
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                             
                             // Show indicator if any filters are active
@@ -212,7 +212,7 @@ struct PlacesListView: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
-                                .background(Color.brown)
+                                .background(Color(hex: "5A3529"))
                                 .cornerRadius(10)
                         }
                     }
@@ -475,7 +475,7 @@ struct QuickFilterTag: View {
             .foregroundColor(isSelected ? .white : .brown)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(isSelected ? Color.brown : Color.brown.opacity(0.1))
+            .background(isSelected ? Color(hex: "5A3529") : Color(hex: "5A3529").opacity(0.1))
             .cornerRadius(15)
         }
         .buttonStyle(PlainButtonStyle())

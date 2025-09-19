@@ -203,7 +203,7 @@ struct MapView: View {
                             Image(systemName: "slider.horizontal.3")
                                 .foregroundColor(.white)
                                 .padding(12)
-                                .background(Color.brown)
+                                .background(Color(hex: "5A3529"))
                                 .clipShape(RoundedRectangle(cornerRadius: 10))
                                 .shadow(color: Color.black.opacity(0.2), radius: 3, x: 0, y: 2)
                         }
