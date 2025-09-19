@@ -175,16 +175,17 @@ struct PlaceListCard: View {
                         
                         // Overall rating with stars
                         let overallRating = (reviewRatings.quietness + reviewRatings.wifi + reviewRatings.food) / 3.0
+                        let displayRating = overallRating > 0 ? overallRating : place.rating
                         
                         HStack(spacing: 4) {
                             HStack(spacing: 2) {
                                 ForEach(0..<5) { index in
-                                    Image(systemName: Double(index) < overallRating ? "star.fill" : "star")
+                                    Image(systemName: Double(index + 1) <= displayRating ? "star.fill" : "star")
                                         .foregroundColor(.yellow)
                                         .font(.system(size: 12, weight: .medium))
                                 }
                             }
-                            Text(String(format: "%.1f", overallRating > 0 ? overallRating : place.rating))
+                            Text(String(format: "%.1f", displayRating))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }

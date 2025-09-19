@@ -333,7 +333,7 @@ struct DetailedReviewView: View {
                 }
             }
     // Helper function for time ago string
-    // Move this function outside the ViewBuilder
+   
             
             // Review Text
             Text(review.comment)
@@ -453,7 +453,7 @@ struct DetailedReviewView: View {
         } message: {
             Text("Are you sure you want to delete this review? This action cannot be undone.")
         }
-    // No explicit return statement needed in SwiftUI ViewBuilder
+   
     }
 }
 

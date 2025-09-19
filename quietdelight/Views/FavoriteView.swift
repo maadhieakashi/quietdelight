@@ -513,18 +513,6 @@ struct FavoritePlaceCard: View {
                         }
                         
                         HStack {
-                            HStack(spacing: 2) {
-                                ForEach(0..<5) { index in
-                                    Image(systemName: Double(index) < place.rating ? "star.fill" : "star")
-                                        .foregroundColor(.yellow)
-                                        .font(.caption)
-                                }
-                            }
-                            
-                            Text(String(format: "%.1f", place.rating))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            
                             if reviewCount > 0 {
                                 Text("(\(reviewCount) review\(reviewCount == 1 ? "" : "s"))")
                                     .font(.caption2)
